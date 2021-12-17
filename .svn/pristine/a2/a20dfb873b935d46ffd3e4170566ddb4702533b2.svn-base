@@ -1,0 +1,47 @@
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+
+require_once(APPPATH . 'controllers/Secure_area.php');
+class Sso extends Secure_area
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model('admin/M_user', '', TRUE);
+		$this->load->model('admin/M_sekolah', '', TRUE);
+		$this->load->model('admin/M_menu', '', TRUE);
+		$this->load->model('admin/M_role', '', TRUE);
+		$this->load->model('admin/Appconfig', '', TRUE);
+
+    }
+    
+    function index()
+    {
+        $data['title'] = 'Members';
+        $this->load->view('sso/user_sso', $data);
+    }
+
+    public function show_data_siswa()
+    {
+        $roleid = $this->load->get_var("user_info")->roleid;
+            $line  = array();
+            $line2 = array();
+            $row2  = array();
+            $hasil = $this->M_sekolah->get_sso()->result();
+            $i = 1;
+            foreach ($hasil as $value) {
+                $row2['no'] = $i++;
+                $row2['email'] = $value->nisn;
+                $row2['username'] = $value->npsn;
+                $row2['display_name'] = $value->nm_sekolah;
+                $row2['role'] = $value->kelas;
+                $row2['status'] = $value->nama;
+                $row2['last_loggin'] = '';
+
+                $line2[] = $row2;
+            }
+            $line['data'] = $line2;
+
+            echo json_encode($line);
+    }
+
+}

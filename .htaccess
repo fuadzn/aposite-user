@@ -1,0 +1,21 @@
+#RewriteEngine on
+#RewriteCond $1 !^(index\.php|app-assets|upload|download|robots\.txt)
+#RewriteRule ^(.*)$ index.php/$1 [L]
+#Header set X-Frame-Options SAMEORIGIN
+#X-Frame-Options: SAMEORIGIN
+Options -Indexes
+<IfModule mod_headers.c>
+	Header set X-XSS-Protection "1; mode=block"
+	Header set X-Frame-Options "deny"
+	Header set X-Content-Type-Options "nosniff"
+	Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	Header set Content-Security-Policy "frame-ancestors 'none'"
+	Header set Referrer-Policy "same-origin"
+	Header set Feature-Policy "geolocation 'self'; vibrate 'none'"
+</IfModule>
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>

@@ -1,0 +1,1010 @@
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+class M_sekolah extends CI_Model
+{
+	function __construct()
+	{
+		parent::__construct();
+	}
+
+	function insert_dyn_user($data)
+	{
+		$this->db->insert('dyn_user', $data);
+		return $this->db->insert_id();
+	}
+
+	function update_dyn_user($data, $userid)
+	{
+		$this->db->where('userid', $userid);
+		$this->db->update('dyn_user', $data);
+		return true;
+	}
+
+	function update_dyn_user2($data, $nuptk)
+	{
+		$this->db->where('username', $nuptk);
+		$this->db->update('dyn_user', $data);
+		return true;
+	}
+
+	function update_table($table, $data, $where)
+	{
+		return $this->db->update($table, $data, $where);
+	}
+
+	function delete_table($table, $where)
+	{
+		return $this->db->delete($table, $where);
+	}
+
+	function exist($username)
+	{
+		$this->db->from('dyn_user');
+		$this->db->where('username', $username);
+		return $this->db->count_all_results();
+	}
+
+	function check_pass_match($data)
+	{
+		$this->db->from('dyn_user');
+		$this->db->where('userid', $this->session->userdata('userid'));
+		$this->db->where('password', $data['currpass']);
+		return $this->db->count_all_results();
+	}
+
+	function get_all()
+	{
+		// return $this->db->query("select *
+		// 	from dyn_user
+		// 	where deleted = 0
+		// 	order by username asc");
+		$this->db->select('*')->from('dyn_user')->where('deleted', 0)->order_by('username', 'asc');
+		return $this->db->get();
+	}
+
+	function get_all_roleid($roleid)
+	{
+		// return $this->db->query("select *
+		// 	from dyn_user
+		// 	where roleid = '$roleid'
+		// 	order by username asc");
+		$sql = "SELECT * from dyn_user where roleid =? order by username asc";
+		return $this->db->query($sql, array($roleid));
+	}
+
+	function get_all_superadmin()
+	{
+		// 	return $this->db->query("select *
+		// 		from dyn_user
+		// 		where roleid = 1
+		// 		order by username asc");
+		$this->db->select('*')->from('dyn_user')->where('roleid', '1')->order_by('username', 'asc');
+		return $this->db->get();
+	}
+
+	function getall_role()
+	{
+		// return $this->db->query("SELECT*FROM dyn_role WHERE id!=1 ORDER BY id ASC");
+		$this->db->select('*')->from('dyn_role')->where('id !=', '1');
+		return $this->db->get();
+	}
+
+	function get_role_all($id)
+	{
+		// return $this->db->query("SELECT b.id, IFNULL(a.roleid,0) as sts, b.role
+		// 	from dyn_user a
+		// 	RIGHT JOIN 
+		// 	dyn_role b
+		// 	on a.roleid = b.id
+		// 	and a.userid = $id");
+		$sql = "SELECT b.id, IFNULL(a.roleid,0) as sts, b.role
+		 	from dyn_user a
+		 	RIGHT JOIN 
+		 	dyn_role b
+		 	on a.roleid = b.id
+		 	and a.userid =?";
+		return $this->db->query($sql, array($id));
+	}
+	function get_role_id()
+	{
+		$userid = $this->session->userdata('userid');
+		// return $this->db->query("Select roleid from dyn_user where userid = '" . $userid . "'");
+		$this->db->select('roleid')->from('dyn_user')->where('userid', $userid);
+		return $this->db->get();
+	}
+
+	function get_role_akses($id)
+	{
+		// return $this->db->query("select b.id, b.deskripsi, b.id as idkasir, IFNULL(a.idkasir,0) as sts, b.kasir
+		// 	from dyn_kasir_user a
+		// 	RIGHT JOIN 
+		// 	dyn_kasir b
+		// 	on a.idkasir = b.id
+		// 	and a.userid = $id");
+		$sql = "SELECT b.id, b.deskripsi, b.id as idkasir, IFNULL(a.idkasir,0) as sts, b.kasir
+		 	from dyn_kasir_user a
+		 	RIGHT JOIN 
+		 	dyn_kasir b
+		 	on a.idkasir = b.id
+			 and a.userid =?";
+		return $this->db->query($sql, array($id));
+	}
+
+	function get_role_aksesOne($id)
+	{
+		// return $this->db->query("select b.id, b.deskripsi, b.id as idkasir, IFNULL(a.idkasir,0) as sts, b.kasir
+		// 	from dyn_kasir_user a
+		// 	JOIN 
+		// 	dyn_kasir b
+		// 	on a.idkasir = b.id
+		// 	and a.userid = $id");
+		$sql = "SELECT b.id, b.deskripsi, b.id as idkasir, IFNULL(a.idkasir,0) as sts, b.kasir
+		 	from dyn_kasir_user a
+		 	JOIN 
+		 	dyn_kasir b
+		 	on a.idkasir = b.id
+			and a.userid =?";
+		return $this->db->query($sql, array($id));
+	}
+	/*
+	Attempts to login employee and set session. Returns boolean based on outcome.
+	*/
+	function login($username, $password)
+	{
+		//$query = $this->db->get_where('dyn_user', array('username' => $username,'password'=>md5($password), 'deleted'=>0), 1);
+		$query = $this->db->get_where('dyn_user', array('username' => $username, 'password' => $password, 'deleted' => 0), 1);
+		if ($query->num_rows() == 1) {
+			$row = $query->row();
+			$this->session->set_userdata('userid', $row->userid);
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	Logs out a user by destorying all session data and redirect to login
+	*/
+	function logout()
+	{
+		$this->session->sess_destroy();
+		redirect('loginn');
+	}
+
+	/*
+	Determins if a user is logged in
+	*/
+	function is_logged_in()
+	{
+		return $this->session->userdata('userid') != false;
+	}
+	/*
+	Gets information about a user loged in
+	*/
+	function get_logged_in_user_info()
+	{
+		$userid = $this->session->userdata('userid');
+		if (($userid)) {
+			return $this->get_info($userid);
+		}
+	}
+	/*
+	Gets information about a particular user
+	*/
+	function get_info($userid)
+	{
+		$this->db->select('userid, name, username, roleid, id_klinik, nama as nm_klinik, namasingkat as namasingkat_klinik, provinsi as provinsi_klinik, kotakabupaten as kotakabupaten_klinik, kecamatan as kecamatan_klinik, kelurahandesa as kelurahandesa_klinik, alamat as alamat_klinik, telp as telp_klinik, email as email_klinik, logo as logo_klinik');
+		$this->db->from('dyn_user');
+		$this->db->where('userid', $userid);
+		$this->db->join('data', 'data.id = dyn_user.id_klinik', 'left');
+		$query = $this->db->get();
+
+		if ($query->num_rows() == 1) {
+			return $query->row();
+		} else {
+			//Get empty base parent object, as $item_id is NOT an item
+			$data_obj = new stdClass();
+
+			//Get all the fields from items table
+			$fields = $this->db->list_fields('dyn_user');
+
+			foreach ($fields as $field) {
+				$data_obj->$field = '';
+			}
+
+			return $data_obj;
+		}
+	}
+	/*
+	Determins whether the employee specified employee has access the specific module.
+	*/
+	function has_permission($url, $userid)
+	{
+		//if no module_id is null, allow access
+		if ($url == null or $url == 'beranda' or $url == 'logout') {
+			return true;
+		} else {
+			if ($this->is_menu($url)) {
+				$query = $this->db->query("select count(*) as jml
+					from dyn_user ru, dyn_role_menu rm, dyn_menu m
+					where ru.userid = $userid
+						and ru.roleid = rm.role_id
+					  and rm.menu_id = m.page_id
+					  and m.url = '$url'");
+				return ($query->row()->jml > 0);
+			} else {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function is_menu($url)
+	{
+		$query = $this->db->query("select count(show_menu) as jml
+					from dyn_menu
+					where url = '$url' and show_menu = 1");
+		return ($query->row()->jml == 1);
+	}
+
+	function save(&$data, $foto)
+	{
+		$query = $this->db->query("INSERT INTO dyn_user (username, password, name, deleted, foto) VALUES ('" . $data["username"] . "','" . $data["password"] . "','" . $data["name"] . "','0','$foto')");
+		if ($query) {
+			return true;
+		}
+		return false;
+	}
+	function update($data)
+	{
+		$this->db->set('password', $this->phpass->hash($data["vpassword"]));
+		$this->db->where('userid', $data["vuserid"]);
+		return $this->db->update('dyn_user');
+	}
+	// function delete($id)
+	// {
+	// 	$this->db->where('userid',$id);	
+	// 	if ($this->db->delete('dyn_user')){
+	// 		return true;
+	// 	}else{			
+	// 		return false;
+	// 	}
+	// }
+	function delete($id)
+	{
+		$this->db->set('deleted', '1');
+		$this->db->where('userid', $id);
+		if ($this->db->update('dyn_user')) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	function active($id)
+	{
+		$this->db->set('deleted', '0');
+		$this->db->where('userid', $id);
+		if ($this->db->update('dyn_user')) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	function userRoleSave($id, &$data)
+	{
+		$this->db->where('userid', $id);
+		$this->db->delete('dyn_role_user');
+		$temp = count($data);
+		for ($i = 0; $i < $temp; $i++) {
+			$this->db->insert('dyn_role_user', $data[$i]);
+		}
+		return true;
+	}
+	function userAksesSave($id, &$data)
+	{
+		$this->db->where('userid', $id);
+		$this->db->delete('dyn_kasir_user');
+		$temp = count($data);
+		for ($i = 0; $i < $temp; $i++) {
+			$this->db->insert('dyn_kasir_user', $data[$i]);
+		}
+		return true;
+	}
+
+	function userAksesSaveOne($id, $data)
+	{
+		$this->db->where('userid', $id);
+		$this->db->delete('dyn_kasir_user');
+
+		$this->db->insert('dyn_kasir_user', $data);
+
+		return true;
+	}
+
+
+
+	function update_photo($uid, $foto)
+	{
+		// return $this->db->query("update dyn_user set foto = '" . $foto . "' where username = '" . $uid . "'");
+		$sql = "UPDATE dyn_user SET foto =? WHERE username =?";
+		return $this->db->query($sql, array($uid, $foto));
+	}
+	function update_name($data)
+	{
+		return $this->db->query("update dyn_user set name = '" . $data["uname"] . "' where username = '" . $data["uid"] . "'");
+	}
+	// function change_pass($data){
+	// 	return $this->db->query("update dyn_user set password = '".$data["newpass"]."' where userid = '".$this->session->userdata('userid')."'");
+	// }
+	function change_pass($data)
+	{
+		$hash_pwd = $this->phpass->hash($data["newpass"]);
+		return $this->db->query("update dyn_user set password = '" . $hash_pwd . "' where userid = '" . $this->session->userdata('userid') . "'");
+	}
+	function get_user($username)
+	{
+		return $this->db->query("SELECT * from dyn_user where deleted = 0 and username COLLATE latin1_general_cs LIKE '$username'");
+	}
+	function get_nisn($nisn)
+	{
+		// return $this->db->query("SELECT * from siswa where nisn='$nisn'");
+		$sql = "SELECT * from siswa where nisn =?";
+		return $this->db->query($sql, array($nisn));
+	}
+	function get_siswa()
+	{
+		// return $this->db->query("SELECT * from siswa");
+		$this->db->select('*')->from('siswa');
+		return $this->db->get();
+	}
+	function insert_sekolah($data)
+	{
+		$this->db->insert('user_sekolah', $data);
+		return true;
+	}
+
+	function insert_sekolah_user($data)
+	{
+		$this->db->insert('dyn_user', $data);
+
+		return true;
+	}
+
+	function update_sekolah($data, $nuptk)
+	{
+		$this->db->where('nuptk', $nuptk);
+		$this->db->update('user_sekolah', $data);
+
+		return true;
+	}
+
+	function insert_region($data)
+	{
+		$this->db->insert('dyn_user', $data);
+
+		return true;
+	}
+
+	function insert_siswa($data)
+	{
+		$this->db->insert('siswa', $data);
+
+		return true;
+	}
+
+	function get_sekolah()
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah");
+		$this->db->select('*')->from('master_sekolah');
+		return $this->db->get();
+	}
+
+	function get_sekolah_by_id_sekolah($id_sekolah)
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah WHERE id_sekolah='$id_sekolah'");
+		$sql = "SELECT * FROM master_sekolah WHERE id_sekolah =?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function get_nuptk($nuptk)
+	{
+		// return $this->db->query("SELECT * FROM user_sekolah WHERE nuptk = '" . $nuptk . "' ");
+		$sql = "SELECT * FROM user_sekolah WHERE nuptk =?";
+		return $this->db->query($sql, array($nuptk));
+	}
+
+	function get_nuptk2($nuptk)
+	{
+		// return $this->db->query("SELECT a.*, b.* FROM user_sekolah a LEFT JOIN dyn_user b ON a.id_sekolah=b.id_sekolah WHERE a.nuptk = '" . $nuptk . "' ");
+		$sql = "SELECT a.*, b.* FROM user_sekolah a LEFT JOIN dyn_user b ON a.id_sekolah=b.id_sekolah WHERE a.nuptk =?";
+		return $this->db->query($sql, array($nuptk));
+	}
+
+	function get_nik($nik)
+	{
+		// return $this->db->query("SELECT * FROM user_sekolah WHERE nik = '$nik' ");
+		$sql = "SELECT * FROM user_sekolah WHERE nik =?";
+		return $this->db->query($sql, array($nik));
+	}
+
+	function cek_sekolah($npsn)
+	{
+		// return $this->db->query("SELECT * FROM user_sekolah WHERE npsn = '" . $npsn . "' AND statuss = '1' ");
+		$sql = "SELECT * FROM user_sekolah WHERE npsn =? AND statuss = '1' ";
+		return $this->db->query($sql, array($npsn));
+	}
+
+	function cek_sekolah2($sekolah)
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah WHERE nm_sekolah = '" . $sekolah . "' ");
+		$sql = "SELECT * FROM master_sekolah WHERE nm_sekolah =? ";
+		return $this->db->query($sql, array($sekolah));
+	}
+
+	function cek_siswa($nisn)
+	{
+		// return $this->db->query("SELECT * FROM master_siswa WHERE nisn = '" . $nisn . "' ");
+		$sql = "SELECT * FROM master_siswa WHERE nisn =? ";
+		return $this->db->query($sql, array($nisn));
+	}
+
+	function cek_siswa_exist($nisn)
+	{
+		// return $this->db->query("SELECT * FROM siswa WHERE nisn = '" . $nisn . "' ");
+		$sql = "SELECT * FROM siswa WHERE nisn =?";
+		return $this->db->query($sql, array($nisn));
+	}
+
+	function cek_nik($nisn, $nik)
+	{
+		// return $this->db->query("SELECT * FROM master_siswa WHERE nisn = '" . $nisn . "' AND nik = '" . $nik . "' ");
+		$sql = "SELECT * FROM master_siswa WHERE nisn =? AND nik =? ";
+		return $this->db->query($sql, array($nisn, $nik));
+	}
+
+	function cek_npsn($nisn, $npsn)
+	{
+		// return $this->db->query("SELECT * FROM master_siswa WHERE nisn = '" . $nisn . "' AND npsn = '" . $npsn . "' ");
+
+		$sql = "SELECT * FROM master_siswa WHERE nisn =? AND npsn =?";
+		return $this->db->query($sql, array($nisn, $npsn));
+
+		// $this->db->select('*')->from('master_siswa')->where('nisn', $nisn)->where('npsn', $npsn);
+		// return $this->db->get();
+	}
+
+	function cek_nuptk($nuptk)
+	{
+		// return $this->db->query("SELECT * FROM master_admin_sekolah WHERE nuptk = '" . $nuptk . "' ");
+		$sql = "SELECT * FROM master_admin_sekolah WHERE nuptk =?";
+		return $this->db->query($sql, array($nuptk));
+	}
+
+	function cek_nikk($nik)
+	{
+		// return $this->db->query("SELECT * FROM master_admin_sekolah WHERE nik = '" . $nik . "' ");
+		$sql = "SELECT * FROM master_admin_sekolah WHERE nik =?";
+		return $this->db->query($sql, array($nik));
+	}
+
+	function cek_nuptk2($nuptk, $nik)
+	{
+		// return $this->db->query("SELECT a.*, b.*, c.* FROM master_admin_sekolah a LEFT JOIN master_sekolah b on b.id_sekolah=a.id_sekolah LEFT JOIN master_region c on b.id_region=c.id_region WHERE a.nuptk = '" . $nuptk . "' AND a.nik = '" . $nik . "'");
+		$sql = "SELECT a.*, b.*, c.* FROM master_admin_sekolah a LEFT JOIN master_sekolah b on b.id_sekolah=a.id_sekolah LEFT JOIN master_region c on b.id_region=c.id_region WHERE a.nuptk =? AND a.nik =?";
+		return $this->db->query($sql, array($nuptk, $nik));
+	}
+
+	function cek_niknpsn($nik, $npsn)
+	{
+		// return $this->db->query("SELECT a.*, b.*, c.* FROM master_admin_sekolah a LEFT JOIN master_sekolah b on b.id_sekolah=a.id_sekolah LEFT JOIN master_region c on b.id_region=c.id_region WHERE a.nik = '" . $nik . "' AND a.npsn = '" . $npsn . "'");
+
+		$sql = "SELECT a.*, b.*, c.* FROM master_admin_sekolah a LEFT JOIN master_sekolah b on b.id_sekolah=a.id_sekolah LEFT JOIN master_region c on b.id_region=c.id_region WHERE a.nik=? AND a.npsn=?";
+		return $this->db->query($sql, array($nik, $npsn));
+
+		// $this->db->select('a.*, b.*, c.*')->from('master_admin_sekolah a')->join('master_sekolah b', 'b.id_sekolah=a.id_sekolah', 'left')->join('master_region c', 'b.id_region=c.id_region', 'left')->where('a.nik', $nik)->where('a.npsn', $npsn);
+		// return $this->db->get();
+	}
+
+	function cek_email($email)
+	{
+		// return $this->db->query("SELECT * FROM siswa WHERE email = '" . $email . "' ");
+		$sql = "SELECT * FROM siswa WHERE email =?";
+		return $this->db->query($sql, array($email));
+	}
+	function get_region()
+	{
+		// return $this->db->query("SELECT * FROM master_region");
+		$this->db->select('*')->from('master_region');
+		return $this->db->get();
+	}
+	function get_region_by_id($id_region)
+	{
+		// return $this->db->query("SELECT * FROM master_region WHERE id_region='$id_region'");
+		$sql = "SELECT * FROM master_region WHERE id_region=?";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_sekolah_by_region($id_region)
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah WHERE id_region='$id_region'");
+		$sql = "SELECT * FROM master_sekolah WHERE id_region=?";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_sekolah_by_region_kota($id_region)
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah WHERE (jenjang like 'SD%' OR jenjang like 'SMP%') AND id_region='$id_region'");
+		$sql = "SELECT * FROM master_sekolah WHERE (jenjang like 'SD%' OR jenjang like 'SMP%') AND id_region=?";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_sekolah_by_region_prov($id_region)
+	{
+		// return $this->db->query("SELECT * FROM master_sekolah WHERE (jenjang like 'SMA%' OR jenjang like 'SMK%') AND id_region='$id_region'");
+		$sql = "SELECT * FROM master_sekolah WHERE (jenjang like 'SMA%' OR jenjang like 'SMK%') AND id_region=?";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_region_by_prov($id_provinsi)
+	{
+		// return $this->db->query("SELECT * FROM master_region WHERE id_provinsi='$id_provinsi'");
+		$sql = "SELECT * FROM master_region WHERE id_provinsi=?";
+		return $this->db->query($sql, array($id_provinsi));
+	}
+	function get_filtered_siswa($id_region, $id_sekolah)
+	{
+		$query = '';
+		if ($id_sekolah != 'null') {
+			$query = "AND id_sekolah='$id_sekolah'";
+		}
+		// return $this->db->query("SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE a.id_region='$id_region' $query");
+		$sql = "SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE a.id_region=? $query";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_filtered_siswa_kota($id_region, $id_sekolah)
+	{
+		$query = '';
+		if ($id_sekolah != 'null') {
+			$query = "AND id_sekolah='$id_sekolah'";
+		}
+		// return $this->db->query("SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE (nm_sekolah LIKE 'SD%' OR nm_sekolah LIKE 'SMP%') AND a.id_region='$id_region' $query");
+		$sql = "SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE (nm_sekolah LIKE 'SD%' OR nm_sekolah LIKE 'SMP%') AND a.id_region=? $query";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_filtered_siswa_prov($id_region, $id_sekolah)
+	{
+		$query = '';
+		if ($id_sekolah != 'null') {
+			$query = "AND id_sekolah='$id_sekolah'";
+		}
+		// return $this->db->query("SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE nm_sekolah LIKE 'SMA%' AND a.id_region='$id_region' $query");
+		$sql = "SELECT a.*, b.nama_region FROM siswa AS a LEFT JOIN master_region AS b ON a.id_region=b.id_region WHERE (nm_sekolah LIKE 'SMA%' OR nm_sekolah LIKE 'SMK%') AND a.id_region=? $query";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_data_pendaftar_by_region($id_region)
+	{
+		// return $this->db->query("SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where master_sekolah.id_region='$id_region' group by siswa.id_sekolah");
+		$sql = "SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where master_sekolah.id_region=? group by siswa.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_data_pendaftar_by_region_kota($id_region)
+	{
+		// return $this->db->query("SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang='SD' or jenjang='SMP') and master_sekolah.id_region='$id_region' group by siswa.id_sekolah");
+		$sql = "SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang LIKE 'SD%' or jenjang LIKE 'SMP%') and master_sekolah.id_region=? group by siswa.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_data_pendaftar_by_region_prov($id_region)
+	{
+		// return $this->db->query("SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where jenjang='SMA' and master_sekolah.id_region='$id_region' group by siswa.id_sekolah");
+		$sql = "SELECT siswa.nm_sekolah, count(id) as siswa from siswa join master_sekolah on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang LIKE 'SMA%' or jenjang LIKE 'SMK%') and master_sekolah.id_region=? group by siswa.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_all_pendaftar_by_region($id_region)
+	{
+		// return $this->db->query("SELECT master_sekolah.nm_sekolah, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where master_sekolah.id_region='$id_region' GROUP BY master_sekolah.id_sekolah");
+		$sql = "SELECT master_sekolah.nm_sekolah, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where master_sekolah.id_region=? GROUP BY master_sekolah.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_all_pendaftar_by_region_kota($id_region)
+	{
+		// return $this->db->query("SELECT master_sekolah.nm_sekolah, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang='SD' or jenjang='SMP') and master_sekolah.id_region='$id_region' GROUP BY master_sekolah.id_sekolah");
+		$sql = "SELECT master_sekolah.nm_sekolah, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang LIKE 'SD%' or jenjang LIKE 'SMP%') and master_sekolah.id_region=? GROUP BY master_sekolah.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_all_pendaftar_by_region_prov($id_region)
+	{
+		$sql = "SELECT master_sekolah.nm_sekolah, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where (jenjang LIKE 'SMA%' or jenjang LIKE 'SMK%') and master_sekolah.id_region=? GROUP BY master_sekolah.id_sekolah";
+		return $this->db->query($sql, array($id_region));
+	}
+	function get_all_pendaftar_by_jenjang($id_region)
+	{
+		$sql = "SELECT master_sekolah.jenjang, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah where master_sekolah.id_region=? GROUP BY master_sekolah.jenjang";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_all_pendaftar_by_jenjang_kota($id_region)
+	{
+		$sql = "SELECT
+		master_sekolah.jenjang,
+		  COUNT(id) AS siswa
+	  FROM
+		master_sekolah
+		  LEFT JOIN siswa
+			ON siswa.id_sekolah = master_sekolah.id_sekolah
+	  WHERE (master_sekolah.jenjang LIKE 'SD%'
+		  OR master_sekolah.jenjang LIKE 'SMP%') 
+		  and master_sekolah.id_region=? 
+		  GROUP BY master_sekolah.jenjang";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_all_pendaftar_by_jenjang_prov($id_region)
+	{
+		$sql = "SELECT
+		master_sekolah.jenjang,
+		  COUNT(id) AS siswa
+	  FROM
+		master_sekolah
+		  LEFT JOIN siswa
+			ON siswa.id_sekolah = master_sekolah.id_sekolah
+	  WHERE (master_sekolah.jenjang LIKE 'SMA%'
+		  OR master_sekolah.jenjang LIKE 'SMK%') 
+		  and master_sekolah.id_region=? 
+		  GROUP BY master_sekolah.jenjang";
+		return $this->db->query($sql, array($id_region));
+	}
+
+	function get_perbandingan_daftar_sekolah($id_sekolah)
+	{
+		$sql = "SELECT count(master_siswa.nisn) as seluruh, count(siswa.nisn) as daftar  from master_siswa left join siswa on master_siswa.nisn=siswa.nisn where master_siswa.id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function get_perbandingan_daftar_sekolah_kota($id_sekolah)
+	{
+		$sql = "SELECT count(master_siswa.nisn) as seluruh, count(siswa.nisn) as daftar  from master_siswa left join siswa on master_siswa.nisn=siswa.nisn where master_siswa.id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function get_perbandingan_daftar_sekolah_prov($id_sekolah)
+	{
+		$sql = "SELECT count(master_siswa.nisn) as seluruh, count(siswa.nisn) as daftar  from master_siswa left join siswa on master_siswa.nisn=siswa.nisn where master_siswa.id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function get_user_sekolah()
+	{
+		$sql = "SELECT * FROM user_sekolah";
+		return $this->db->query($sql);
+	}
+	function get_user_sekolah1($id_provinsi)
+	{
+		$sql = "SELECT * FROM user_sekolah where (sekolah LIKE 'SMA%' or sekolah LIKE 'SMK%') and id_provinsi = ?";
+		return $this->db->query($sql, array($id_provinsi));
+	}
+
+	function get_user_sekolah2($id_regional)
+	{
+		$sql = "SELECT * FROM user_sekolah where (sekolah LIKE 'SD%' or sekolah LIKE 'SMP%') and id_region = ?";
+		return $this->db->query($sql, array($id_regional));
+	}
+
+	function get_asal_sekolah($userid, $role_id)
+	{
+		if ($role_id == 10) {
+			$sql = "SELECT '' as id_sekolah,id_region, master_region.id_provinsi FROM master_region join dyn_user on master_region.id_region = dyn_user.id_regional where userid = ?";
+			return $this->db->query($sql, array($userid));
+		} else if ($role_id == 9) {
+			$sql1 = "SELECT master_sekolah.id_sekolah,id_region FROM master_sekolah join dyn_user on master_sekolah.id_sekolah = dyn_user.id_sekolah where userid =?";
+			return $this->db->query($sql1, array($userid));
+		} else {
+			$sql2 = "SELECT id_sekolah,id_regional as id_region FROM  dyn_user where userid =?";
+			return $this->db->query($sql2, array($userid));
+		}
+	}
+
+	function update_to_active($id)
+	{
+		$data = array(
+			"statuss" => '1'
+		);
+
+		$this->db->where('id', $id);
+		$this->db->update('user_sekolah', $data);
+	}
+
+	function update_to_nonactive($id)
+	{
+		$data = array(
+			"statuss" => '0'
+		);
+
+		$this->db->where('id', $id);
+		$this->db->update('user_sekolah', $data);
+	}
+
+	function search_blog($title)
+	{
+		$this->db->like('nm_sekolah', $title, 'both');
+		$this->db->order_by('nm_sekolah', 'ASC');
+		$this->db->limit(10);
+		return $this->db->get('master_sekolah')->result();
+	}
+
+	function search_regional($title)
+	{
+		$this->db->like('nama_region', $title, 'both');
+		$this->db->order_by('nama_region', 'ASC');
+		$this->db->limit(10);
+		return $this->db->get('master_region')->result();
+	}
+
+	function get_sekolah_by_id($id)
+	{
+		$sql = "SELECT * FROM user_sekolah WHERE id = ?";
+		return $this->db->query($sql, array($id));
+	}
+
+	function get_siswa2($id_sekolah)
+	{
+		$sql = "SELECT * from siswa WHERE id_sekolah = ?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function get_roleid($roleid)
+	{
+		$sql = "SELECT roleid FROM dyn_user where roleid = ?";
+		return $this->db->query($sql, array($roleid));
+	}
+
+	function cek_npsn_by_id($nisn, $npsn, $id_sekolah)
+	{
+		$sql = "SELECT * FROM master_siswa WHERE nisn = ? AND npsn = ? AND id_sekolah = ?";
+		return $this->db->query($sql, array($nisn, $npsn, $id_sekolah));
+	}
+
+	function cek_siswa_by_id($nisn, $id_sekolah)
+	{
+		$sql = "SELECT * FROM master_siswa WHERE nisn = ? AND id_sekolah = ?";
+		return $this->db->query($sql, array($nisn, $id_sekolah));
+	}
+
+	function cek_region($nama_region)
+	{
+		$sql = "SELECT * FROM master_region WHERE nama_region = ?";
+		return $this->db->query($sql, array($nama_region));
+	}
+
+	function get_regions()
+	{
+		$sql = "SELECT * FROM master_region ";
+		return $this->db->query($sql);
+	}
+
+	function get_user_region()
+	{
+		$sql = "SELECT * FROM dyn_user a 
+		LEFT JOIN master_region b 
+			on b.id_region=a.id_regional
+		LEFT JOIN master_provinsi c
+			on a.id_provinsi=c.id_provinsi
+			WHERE roleid = 10 OR roleid = 11";
+		return $this->db->query($sql);
+	}
+
+	function log_activity($data)
+	{
+		return $this->db->insert('log_activity', $data);
+	}
+
+	function get_userid($username)
+	{
+		// return $this->db->query("SELECT userid FROM dyn_user WHERE username='$username'");
+		$this->db->select('userid')->from('dyn_user')->where('username', $username);
+
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) {
+			return $query->row()->userid;
+		}
+		return false;
+	}
+
+	function last_login($id)
+	{
+		$sql = "SELECT *
+		FROM log_activity a LEFT JOIN dyn_user b ON b.userid=a.userid
+		WHERE a.userid = ? ";
+		return $this->db->query($sql, array($id));
+	}
+
+	function get_iduser()
+	{
+		$sql = "SELECT userid FROM dyn_user";
+		return $this->db->query($sql);
+	}
+
+	function dyn_user($username)
+	{
+		$sql = "SELECT * FROM dyn_user WHERE username = ?";
+		return $this->db->query($sql, array($username));
+	}
+
+	function jns_kel($id_sekolah)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa WHERE id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function jns_kel_kota($id_sekolah)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa WHERE id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function jns_kel_prov($id_sekolah)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa WHERE id_sekolah=?";
+		return $this->db->query($sql, array($id_sekolah));
+	}
+
+	function jns_kel2($id_regional)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa  WHERE id_region=?";
+		return $this->db->query($sql, array($id_regional));
+	}
+	function jns_kel2_kota($id_regional)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa  WHERE (nm_sekolah LIKE 'SD%' OR nm_sekolah LIKE 'SMP%') AND id_region=?";
+		return $this->db->query($sql, array($id_regional));
+	}
+	function jns_kel2_prov($id_regional)
+	{
+		$sql = "SELECT sum(if((sex = 'L'),1,0)) as laki, sum(if((sex = 'P'),1,0)) as perem FROM siswa  WHERE (nm_sekolah LIKE 'SMA%' OR nm_sekolah LIKE 'SMK%') AND id_region=?";
+		return $this->db->query($sql, array($id_regional));
+	}
+
+	function get_email($id)
+	{
+		$this->db->select('*');
+		$this->db->from('siswa');
+		$this->db->where('id', $id);
+		return $this->db->get();
+	}
+
+	function cek_send_mail($nuptk, $nik)
+	{
+		$sql = "SELECT * FROM user_sekolah WHERE nuptk=? AND nik=?";
+		return $this->db->query($sql, array($nuptk, $nik));
+	}
+
+	function update_reset_key($email, $reset_key)
+	{
+		$this->db->where('email', $email);
+		$data = array('reset_password' => $reset_key);
+		$this->db->update('user_sekolah', $data);
+		if ($this->db->affected_rows() > 0) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+
+	public function reset_password($reset_key, $password)
+	{
+		$this->db->where('reset_password', $reset_key);
+		$data = array('password' => $password);
+		$this->db->update('user_sekolah', $data);
+		return ($this->db->affected_rows() > 0) ? TRUE : FALSE;
+	}
+
+
+	public function check_reset_key($reset_key)
+	{
+		$this->db->where('reset_password', $reset_key);
+		$this->db->from('user_sekolah');
+		return $this->db->count_all_results();
+	}
+
+	function get_nuptk_username($reset_key)
+	{
+		$this->db->select('*');
+		$this->db->from('user_sekolah');
+		$this->db->where('reset_password', $reset_key);
+		return $this->db->get();
+	}
+
+	public function reset_password2($username, $password)
+	{
+		$this->db->where('username', $username);
+		$data = array('password' => $password);
+		$this->db->update('dyn_user', $data);
+		return ($this->db->affected_rows() > 0) ? TRUE : FALSE;
+	}
+
+	function cek_nuptk_email($nuptk)
+	{
+		$sql = "SELECT * FROM user_sekolah WHERE nuptk = ? ";
+		return $this->db->query($sql, array($nuptk));
+	}
+
+	function cek_nuptk_email2($nuptk, $nik)
+	{
+		$sql = "SELECT * FROM user_sekolah a WHERE a.nuptk = ? AND a.nik = ?";
+		return $this->db->query($sql, array($nuptk, $nik));
+	}
+
+	function get_provinsi()
+	{
+		$sql = "SELECT * FROM master_provinsi ";
+		return $this->db->query($sql);
+	}
+	function get_provinsi2($id_provinsi)
+	{
+		$sql = "SELECT * FROM master_provinsi WHERE id_provinsi=?";
+		return $this->db->query($sql, array($id_provinsi));
+	}
+	function get_kota($provinsi)
+	{
+		$sql = "SELECT * FROM master_region WHERE id_provinsi=?";
+		return $this->db->query($sql, array($provinsi));
+	}
+	function update_kode_otentikasi($nik, $reset_key, $update)
+	{
+		$this->db->where('nik', $nik);
+		$data = array('kd_otentikasi' => $reset_key, 'xupdate_reset' => $update);
+		$this->db->update('master_admin_sekolah', $data);
+		if ($this->db->affected_rows() > 0) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+	function cek_kode($kode)
+	{
+		$sql = "SELECT * FROM master_admin_sekolah WHERE kd_otentikasi=?";
+		return $this->db->query($sql, array($kode));
+	}
+
+	public function get_time_reset($reset_key)
+	{
+		$this->db->select('xupdate_reset');
+		$this->db->where('kd_otentikasi', $reset_key);
+		$this->db->from('master_admin_sekolah');
+		return $this->db->get();
+	}
+
+	public function get_data_reg($id)
+	{
+		// $where = "roleid ='10' OR roleid = '11'";
+		$this->db->select('*');
+		$this->db->from('dyn_user');
+		$this->db->where('userid', $id);
+		// $this->db->where($where);
+		return $this->db->get();
+	}
+
+
+	function delete_regional($id)
+	{
+		$this->db->where('userid', $id);
+		$this->db->delete('dyn_user');
+
+		return true;
+	}
+
+	public function get_id_siswa($id)
+	{
+		$sql = "SELECT * FROM siswa WHERE id = ?";
+		return $this->db->query($sql, array($id));
+	}
+
+	public function cek_emailal($email)
+	{
+		$sql = "SELECT * FROM user_sekolah WHERE email = ?";
+		return $this->db->query($sql, array($email));
+	}
+
+	function get_statistik()
+	{
+		$sql = "SELECT master_sekolah.jenjang, count(id) as siswa from master_sekolah left join siswa on siswa.id_sekolah=master_sekolah.id_sekolah GROUP BY master_sekolah.jenjang";
+		return $this->db->query($sql);
+	}
+}

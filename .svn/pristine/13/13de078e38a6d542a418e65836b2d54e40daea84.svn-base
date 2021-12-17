@@ -1,0 +1,387 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class M_dokter extends CI_Model{
+	function __construct(){
+		parent::__construct();
+	}	
+	
+	function get_allpoli(){
+		return $this->db->query("SELECT id_poli, nm_poli FROM poliklinik");
+	}
+	
+	function get_allpoli_klinik($id_klinik){
+		return $this->db->query("SELECT id_poli, nm_poli FROM v_poli_klinik WHERE id_klinik='".$id_klinik."'");
+	}
+	
+	function get_alldokter($id_klinik){
+		return $this->db->query("SELECT id_dokter, nm_dokter, nipeg, mitra FROM data_dokter WHERE id_klinik='$id_klinik' ORDER BY id_dokter ASC");
+	}
+	
+	function get_allpoliexist(){
+		return $this->db->query("SELECT a.id_poli,a.nm_poli FROM poliklinik a JOIN data_jadwal b ON b.id_poli=a.id_poli GROUP BY id_poli");
+	}
+	
+	function get_allpoliexistklinik($id_klinik){
+		return $this->db->query("SELECT a.id_poli,a.nm_poli FROM v_poli_klinik a JOIN data_jadwal b ON b.id_poli=a.id_poli WHERE a.id_klinik='$id_klinik' GROUP BY id_poli");
+	}
+	
+	function get_alldokterexist($id_poli){
+		return $this->db->query("SELECT a.id_dokter,b.nm_dokter FROM data_jadwal a JOIN data_dokter b ON b.id_dokter=a.id_dokter WHERE a.id_poli='$id_poli' GROUP BY a.id_dokter");
+	}
+	
+	function get_alldokterexistklinik($id_poli, $id_klinik){
+		return $this->db->query("SELECT a.id_dokter,b.nm_dokter FROM data_jadwal a JOIN data_dokter b ON b.id_dokter=a.id_dokter WHERE a.id_poli='$id_poli' AND b.id_klinik='$id_klinik' GROUP BY a.id_dokter");
+	}
+	
+	function get_alldokterjadwal($id_poli, $id_dokter, $hari){
+		return $this->db->query("SELECT id,LEFT (jam_mulai,5) AS jam_mulai,LEFT (jam_selesai,5) AS jam_selesai, deleted FROM data_jadwal WHERE id_poli='$id_poli' AND id_dokter='$id_dokter' AND hari='$hari' ORDER BY jam_mulai ASC");
+	}
+	
+	function get_alldokterjadwalbatal($id_poli, $id_dokter, $hari, $tgl){
+		// return $this->db->query("SELECT id,LEFT (jam_mulai,5) AS jam_mulai,LEFT (jam_selesai,5) AS jam_selesai, deleted FROM data_jadwal WHERE id_poli='$id_poli' AND id_dokter='$id_dokter' AND hari='$hari' ORDER BY jam_mulai ASC");
+		return $this->db->query("SELECT a.id,LEFT (a.jam_mulai,5) AS jam_mulai,LEFT (a.jam_selesai,5) AS jam_selesai,a.deleted,b.id as id_batal, b.status as status_batal, b.nm_dokter_pengganti FROM data_jadwal a LEFT JOIN v_data_jadwal_batal b ON a.id=b.id_jadwal AND tgl_batal='$tgl' WHERE a.id_poli='$id_poli' AND a.id_dokter='$id_dokter' AND a.hari='$hari' ORDER BY a.jam_mulai ASC");
+	}
+
+	function get_all_dokter($id_klinik){
+        return $this->db->query("SELECT a.id_dokter, a.nm_dokter FROM data_dokter a LEFT JOIN dokter_poli b ON b.id_dokter=a.id_dokter WHERE a.id_klinik='$id_klinik' AND a.deleted=0");
+    }
+	
+	function get_dokter_poli($id_poli){
+		return $this->db->query("SELECT a.id_dokter, a.nm_dokter FROM data_dokter a LEFT JOIN dokter_poli b ON b.id_dokter=a.id_dokter WHERE b.id_poli='$id_poli' AND a.deleted=0");
+	}
+	
+	function get_dokter_poli_klinik($id_poli, $id_klinik){
+		return $this->db->query("SELECT a.id_dokter, a.nm_dokter FROM data_dokter a LEFT JOIN dokter_poli b ON b.id_dokter=a.id_dokter WHERE b.id_poli='$id_poli' AND id_klinik='$id_klinik' AND a.deleted=0");
+	}
+	
+	function get_dokter_poli_exist($id_dokter){
+		return $this->db->query("SELECT b.id_poli,b.nm_poli,a.id_dokter FROM poliklinik b LEFT JOIN dokter_poli a ON b.id_poli=a.id_poli AND a.id_dokter='$id_dokter' ORDER BY b.nm_poli ASC");
+	}
+	
+	function get_dokter_poli_exist_klinik($id_dokter, $id_klinik){
+		return $this->db->query("SELECT b.id_poli,b.nm_poli,a.id_dokter FROM v_poli_klinik b LEFT JOIN dokter_poli a ON b.id_poli=a.id_poli AND a.id_dokter='$id_dokter' WHERE b.id_klinik='".$id_klinik."' ORDER BY b.nm_poli ASC");
+	}
+	
+	function get_jadwal_dokter($id_dokter,$hari){
+		return $this->db->query("SELECT id,jam_mulai,jam_selesai FROM data_jadwal WHERE id_dokter='$id_dokter' AND hari='$hari'");
+	}
+	
+	function get_jadwal_dokter_ex($id_dokter,$hari,$id){
+		return $this->db->query("SELECT id,jam_mulai,jam_selesai FROM data_jadwal WHERE id_dokter='$id_dokter' AND hari='$hari' AND id NOT IN('".$id."')");
+	}
+	
+	function get_jadwal($id){
+		return $this->db->query("SELECT * FROM v_data_jadwal WHERE id='$id'");
+	}
+	
+	function get_allpolidokter($id_dokter){
+		return $this->db->query("SELECT a.id,a.id_poli,a.id_dokter,b.nm_poli FROM dokter_poli a JOIN poliklinik b ON b.id_poli=a.id_poli WHERE a.id_dokter='$id_dokter'");
+	}
+	
+	function get_user_role($id_klinik){
+		return $this->db->query("SELECT a.name,a.username,b.id_dokter FROM dyn_user a LEFT JOIN data_dokter b ON b.username=a.username WHERE a.roleid=7 AND a.id_klinik='$id_klinik' AND b.id_dokter IS NULL ORDER BY a.username ASC");
+	}
+		
+	function exist_username($id_icd){
+		$this->db->from('icd1');
+		$this->db->where('id_icd', $id_icd);	
+		return $this->db->count_all_results();	
+	}
+
+	function jadwalAdd($data){	
+		$this->load->library('uuid');
+        //Output a v4 UUID 
+        $id = $this->uuid->v4();
+		$this->db->set('id',"'".$id."'",FALSE);
+		$this->db->insert('data_jadwal', $data);
+		return  $id;
+	}
+
+	function get_allsdokter($id_klinik){	
+		return $this->db->query("SELECT id_dokter,nm_dokter,group_concat(nm_poli SEPARATOR ', ') AS nm_poli FROM v_dokter_poli WHERE id_klinik='$id_klinik' GROUP BY id_dokter ORDER BY nm_dokter ASC");
+	}
+
+	function get_dokter($id_dokter){	
+		return $this->db->query("SELECT * FROM data_dokter WHERE id_dokter='$id_dokter'");
+	}
+
+	function get_dokter_username($username){	
+		return $this->db->query("SELECT * FROM data_dokter WHERE username='$username'");
+	}
+
+	function dokterAdd($data){	
+		$this->db->insert('data_dokter', $data);
+		return  $this->db->insert_id();
+	}
+
+	function dokterEdit($data, $id_dokter){  
+        $this->db->where('id_dokter',$id_dokter); 
+        $this->db->update('data_dokter', $data);
+        return true;
+	}
+
+	function userEdit($data, $username){  
+        $this->db->where('username',$username); 
+        $this->db->update('dyn_user', $data);
+        return true;
+	}
+
+	function changeDokterPoli($data = array(), $id){
+		if($this->removeDokterPoli($id)){
+	        $insert = $this->db->insert_batch('dokter_poli',$data);
+	        return $insert?true:false;
+		}else{
+			return false;
+		}
+    }
+
+	private function removeDokterPoli($id_dokter){
+		$this->db->where('id_dokter', $id_dokter);
+		$this->db->delete('dokter_poli');
+        return true;
+    }
+
+	function jadwalEdit($data, $id){  
+        $this->db->where('id',$id); 
+        $this->db->update('data_jadwal', $data);
+        return true;
+	}
+	
+	function get_alljadwalbatal(){
+		$this->db->order_by('tgl_batal DESC, jam DESC');
+		$this->db->select('id,nm_dokter,nm_poli,tgl_batal,jam,name,id_dokter_pengganti');
+		$this->db->from('v_data_jadwal_batal');
+		return $this->db->get();
+	}
+	
+	function get_alljadwalbatalklinik($id_klinik){
+		$this->db->order_by('tgl_batal DESC, jam DESC');
+		$this->db->select('id,nm_dokter,nm_poli,tgl_batal,jam,name,id_dokter_pengganti');
+		$this->db->from('v_data_jadwal_batal');
+		$this->db->where('id_klinik', $id_klinik);
+		return $this->db->get();
+	}
+	
+	function get_jadwal_dokter_poli($data){
+		$this->db->where($data);
+		$this->db->select('id,LEFT(jam_mulai,5) as jam_mulai,LEFT(jam_selesai,5) as jam_selesai');
+		$this->db->from('data_jadwal');
+		return $this->db->get();
+	}
+
+	function pembatalanJadwalAdd($data){	
+		$this->load->library('uuid');
+        //Output a v4 UUID 
+        $id = $this->uuid->v4();
+		$this->db->set('id',"'".$id."'",FALSE);
+		$this->db->insert('data_jadwal_batal', $data);
+		return  $id;
+	}
+
+	function pembatalanJadwalDelete($id){
+		$this->db->where('id', $id);
+		$this->db->delete('data_jadwal_batal');		
+		return true;
+	}
+	
+	function get_jadwal_batal($id){
+		return $this->db->query("SELECT * FROM data_jadwal_batal WHERE id='$id'");
+	}
+	
+	function get_name_username($userid){
+		return $this->db->query("SELECT name FROM dyn_user WHERE userid='$userid'");
+	}
+
+	function loguserdokter($data){	
+		$this->db->insert('log', $data);
+		return  true;
+	}
+	
+	function get_klinik($id){
+		return $this->db->query("SELECT * FROM data_klinik WHERE id = '$id'");
+	}
+
+	function exist_jadwal_batal($data){	
+		$this->db->from('data_jadwal_batal');
+		$this->db->where($data);	
+		return $this->db->count_all_results();	
+	}
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	function get_vklinik($id){
+		return $this->db->query("SELECT `a`.`id` AS `id`,`a`.`klinikid` AS `klinikid`,`a`.`nama` AS `nama`,`a`.`namasingkat` AS `namasingkat`,`a`.`alamat` AS `alamat`,`a`.`telp` AS `telp`,`a`.`email` AS `email`,`a`.`id_provinsi` AS `id_provinsi`,`b`.`nama` AS `nm_provinsi`,`a`.`id_kotakabupaten` AS `id_kotakabupaten`,`c`.`nama` AS `nm_kotakabupaten`,`a`.`id_kecamatan` AS `id_kecamatan`,`d`.`nama` AS `nm_kecamatann`,`a`.`id_kelurahandesa` AS `id_kelurahandesa`,`e`.`nama` AS `nm_kelurahandesa` FROM `data_klinik` AS a LEFT JOIN master_provinsi AS b ON `a`.`id_provinsi`=`b`.`id` LEFT JOIN master_kotakabupaten AS c ON `a`.`id_kotakabupaten`=`c`.`id` LEFT JOIN master_kecamatan AS d ON `a`.`id_kecamatan`=`d`.`id` LEFT JOIN master_kelurahandesa AS e ON `a`.`id_kelurahandesa`=`e`.`id` WHERE a.id='$id'");
+	}
+
+	function get_roles(){
+		return $this->db->query("SELECT * FROM dyn_role WHERE is_active = 1 AND id!=1 ORDER BY role ASC");
+	}
+	
+	// function get_klinik_by_klinikid($klinikid){
+	// 	return $this->db->query("SELECT * FROM data_klinik WHERE klinikid = '".$klinikid."'");
+	// }
+	
+	function get_all(){
+		return $this->db->query("SELECT * FROM data_klinik");
+	}
+	
+	function get_all_user($id_klinik){
+		return $this->db->query("SELECT a.userid,a.name,a.username,a.roleid,b.role FROM dyn_user a LEFT JOIN dyn_role b ON b.id=a.roleid WHERE a.id_klinik='$id_klinik' AND a.roleid!=1 ORDER BY a.xcreate_date ASC");
+	}
+	
+	function get_auto_klinikid($id_prov){
+		$query = $this->db->query("SELECT RIGHT(klinikid,4) as klinikid FROM data_klinik WHERE LEFT(klinikid,2) = '".$id_prov."' ");
+		return $query->last_row();
+	}
+	
+	function klinikAdd($data){	
+		$this->load->library('uuid');
+        //Output a v4 UUID 
+        $id = $this->uuid->v4();
+		$this->db->set('id',"'".$id."'",FALSE);
+		$this->db->insert('data_klinik', $data);
+		return  $id;
+	}
+
+	function klinikEdit($data, $id){  
+        $this->db->where('id',$id); 
+        $this->db->update('data_klinik', $data);
+        return true;
+	}
+
+	function nm_provinsi($id) {
+		$this->db->from('master_provinsi');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kota($id) {
+		$this->db->from('master_kotakabupaten');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kecamatan($id) {
+		$this->db->from('master_kecamatan');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kelurahan($id) {
+		$this->db->from('master_kelurahandesa');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+
+
+
+
+
+		
+	function exist($role){
+		$this->db->from('dyn_role');
+		$this->db->where('role',$role);	
+		return $this->db->select();	
+	}
+	
+	function roleMenuSave($id,&$data)
+	{	
+		$this->db->where('role_id', $id);
+		$this->db->delete('dyn_role_menu');
+		$temp =count($data);
+		for($i=0; $i<$temp;$i++){
+			$this->db->insert('dyn_role_menu',$data[$i]);
+		}
+		return true;
+	}
+
+	function getTest()
+	{
+		return $this->db->query("SELECT 'Ahmad Abbdul Ghani' as nama, 'ghani' as nama_singkat, 'Babakan Irigasi' as alamat, '' as jenis ");
+	}
+	
+	// function get_info($id)
+	// {
+	// 	$this->db->from('dyn_role');	
+	// 	$this->db->where('id',$id);
+	// 	$query = $this->db->get();
+		
+	// 	if($query->num_rows()==1)
+	// 	{
+	// 		return $query->row();
+	// 	}
+	// 	else
+	// 	{
+	// 		//Get empty base parent object, as $item_id is NOT an item
+	// 		$data_obj=new stdClass();
+
+	// 		//Get all the fields from items table
+	// 		$fields = $this->db->list_fields('dyn_role');
+
+	// 		foreach ($fields as $field)
+	// 		{
+	// 			$data_obj->$field='';
+	// 		}
+
+	// 		return $data_obj;
+	// 	}
+	// }
+	
+	// function save(&$data)
+	// {	
+	// 	if ($data["id"] == ''){
+	// 		$this->db->set('is_active', '1');
+	// 		$role = $data["role"];
+	// 		$deskripsi = $data["deskripsi"];
+	// 		// if($this->db->insert('dyn_role',$data))
+	// 		$query = $this->db->query("INSERT INTO dyn_role (is_active, role, deskripsi) VALUES ('1', '$role','$deskripsi')");
+	// 		if($query)
+	// 		{
+	// 			return true;
+	// 		}
+	// 		return false;
+	// 	}else{			
+	// 		$this->db->set('is_active', $data["is_active"]);
+	// 		$this->db->where('id', $data["id"]);
+	// 		return $this->db->update('dyn_role');
+	// 	}
+	// }
+	
+	// function delete($id)
+	// {
+	// 	$this->db->where('id',$id);	
+	// 	if ($this->db->delete('dyn_role')){
+	// 		return true;
+	// 	}else{			
+	// 		return false;
+	// 	}
+	// }
+	
+	// function get_menu_all($id){
+	// 	return $this->db->query("select b.page_id,
+	// 		CASE WHEN b.is_parent = 1 THEN CONCAT(LPAD(b.page_id,2,'0'),'00')
+	// 								ELSE CONCAT(LPAD(b.parent_id,2,'0'),LPAD(b.position,2,'0'))
+	// 		END AS urutan,
+	// 		CASE WHEN (b.is_parent = 1 or b.parent_id = 0) THEN b.title
+	// 								ELSE CONCAT('<i class=\"fa fa-angle-double-right fa-fw\"></i>',b.title)
+	// 		END AS title, IFNULL(a.role_id,0) as sts
+	// 		from dyn_role_menu a
+	// 		RIGHT JOIN 
+	// 		dyn_menu b
+	// 		on a.menu_id = b.page_id
+	// 		and a.role_id = $id
+	// 		order by urutan asc");
+	// }
+}
+?>

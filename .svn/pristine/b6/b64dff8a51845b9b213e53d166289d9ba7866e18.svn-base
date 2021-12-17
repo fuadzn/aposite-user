@@ -1,0 +1,114 @@
+<?php
+$this->load->view('layout/header');
+?>
+
+<section class="content">
+<div class="row">
+<div class="col-md-4 col-12">
+			<div class="card">
+				<div class="card-content">
+					<div class="card-body">
+						<div class="row">
+							<div class="col-sm-8 text-center offset-2">
+								<img height="250px" class="users-avatar-shadow rounded" src="<?php
+																				echo site_url("assets/images/users/NoImageAvailable.jpg");
+																				?>">
+									<button class="btn btn-info btn-sm mt-1 btn-block">Manage Your SSO Account</button>
+									<button class="btn btn-warning btn-sm btn-block" id="suratKeterangan">Back</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+<div class="col-md-8 col-12">
+			<div class="card">
+				<div class="card-header pb-1">
+					<h3 class="card-title text-center">User Profile</h3>
+				</div>
+				<div class="card-content">
+					<div class="card-body">
+						<div class="row">
+                        <div class="col-sm-12">
+								<div class="table-responsive">
+									<table class="table-xs table-striped" width="100%">
+										<tbody>
+											<tr>
+												<td>Email</td>
+												<td>:</td>
+                                                <td><?php echo $get_data['email'] ?></td>
+											</tr>
+											<tr>
+												<td>Username</td>
+												<td>:</td>
+                                                <td><?php echo $get_data['username'] ?></td>
+											</tr>
+											<tr>
+												<td>Display Name</td>
+												<td>:</td>
+                                                <td><?php echo $get_data['displayname'] ?></td>
+											</tr>
+											<tr>
+												<td>Status</td>
+												<td>:</td>
+                                                <td>Enabled</td>
+											</tr>
+											<tr>
+												<td>Registered Date</td>
+												<td>:</td>
+                                                <td><?php echo date('Y-m-d', $get_data['createdTimestamp']) ?></td>
+											</tr>
+											<tr>
+												<td>Last Logged-in</td>
+												<td>:</td>
+                                                <td><?php echo date('Y-m-d', $get_data['lastLoggedinTimestamp']) ?></td>
+											</tr>
+											<tr>
+												<td>User Role</td>
+												<td>:</td>
+                                                <td><?php echo $get_role['name'] ?></td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+					</div>
+				</div>
+			</div>
+		</div>
+        </div>
+</section>
+
+<?php
+$this->load->view("layout/footer");
+?>
+<script>
+
+        tabel_detail = $('#table_nisn').DataTable({
+            aoColumnDefs: [
+                { bSortable: false, aTargets: [ 0 ] }
+            ],
+          ajax: {
+            "url": '<?php echo site_url('sso/show_data_sso')?>',
+            "type": 'POST',
+            "dataSrc":'',
+            "data": function ( d ) {
+            },
+              },
+              columns: [
+                { data: "no" },
+                { data: "email" },
+                { data: "username" },
+                { data: "displayname" },
+                { data: "role_name" },
+                { data: "status" },
+                { data: "last_login" }
+              ]
+        });
+        tabel_detail.on( 'order.table_nisn search.table_nisn', function () {
+        tabel_detail.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1;
+        } );
+    } ).draw();
+
+</script>

@@ -1,0 +1,1267 @@
+<?php
+defined('BASEPATH') or exit('No direct script access allowed');
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+class Login_portal extends CI_Controller
+{
+	public function __construct()
+	{
+		parent::__construct();
+		if($this->uri->total_segments() === 0){
+	        redirect('login_portal','refresh');
+	  }
+		require APPPATH.'libraries/PHPMailer/src/Exception.php';
+		require APPPATH.'libraries/PHPMailer/src/PHPMailer.php';
+		require APPPATH.'libraries/PHPMailer/src/SMTP.php';
+		$this->load->model('admin/M_sekolah', '', TRUE);
+		$this->load->model('admin/M_user', '', TRUE);
+	}
+
+	function index()
+	{
+		$data['sekolah'] = $this->M_sekolah->get_sekolah()->result();
+		if ($this->M_sekolah->is_logged_in()) {
+			redirect('beranda');
+		} else {
+			$this->form_validation->set_rules('username', 'Username', 'callback_login_check');
+			$this->form_validation->set_error_delimiters('<div class="error">', '</div>');
+
+			if ($this->form_validation->run() == FALSE) {
+				$data['username'] = $this->input->post('username');
+				$this->load->view('loginn', $data);
+			} else
+				redirect('beranda');
+		}
+	}
+
+	function privacy_policy_eng()
+	{
+		$this->load->view('privacy_policy_eng');
+	}
+	function privacy_policy_ind()
+	{
+		$this->load->view('privacy_policy_ind');
+	}
+
+	function get_autocomplete()
+	{
+		// if (isset($_GET['term'])) {
+		// 	$result = $this->M_sekolah->search_blog($_GET['term']);
+		// 	if (count($result) > 0) {
+		// 		foreach ($result as $row)
+		// 			$arr_result[] = $row->nm_sekolah;
+		// 		echo json_encode($arr_result);
+		// 	} else {
+		// 		$arr_result['suggestions'][] = array(
+		// 			'value' => 'Data Kosong / Tidak ditemukan',
+		// 			'nm_sekolah' => ''
+		// 		);
+		// 	}
+		// }
+
+		$keyword = $this->input->get("query");
+		$data = $this->M_sekolah->search_blog($keyword);
+
+		$arr = [];
+		$arr['suggestions'] = [];
+		foreach ($data as $row) {
+			$arr['query'] = $keyword;
+			$arr['suggestions'][] = array(
+				'value' => $row->nm_sekolah
+			);
+		}
+		// minimal PHP 5.2
+		echo json_encode($arr);
+	}
+
+	function login_check($username)
+	{
+		$password = $this->input->post("password");
+		$cek = $this->M_user->cek_status($username)->num_rows();
+		$user = $this->M_sekolah->get_user($username)->result();
+		if (count($user) == 0) {
+			$this->form_validation->set_message('login_check', '<p class="px-2" style="color:red; margin-left:27px;">Username/Password salah!</p>');
+			return false;
+		} else if ($cek) {
+			$this->form_validation->set_message('login_check', '<p class="px-2" style="color:red;">Akun sudah tidak aktif!</p>');
+			return false;
+		} else {
+			foreach ($user as $row) {
+				$hashed = $row->password;
+				$userid = $row->userid;
+			}
+
+			if ($this->phpass->check($password, $hashed)) {
+				$this->session->set_userdata('userid', $userid);
+				$get_user = $this->M_sekolah->get_userid($this->input->post('username'));
+				$data = array(
+					'keterangan' => 'Login',
+					'ket_waktu' => date('Y-m-d h:i:s'),
+					'userid' => $get_user
+				);
+				$result = $this->M_sekolah->log_activity($data);
+				echo json_encode($result);
+
+				return true;
+			} else {
+				$this->form_validation->set_message('login_check', '<p class="px-2" style="color:red;">Username/Password salah!</p>');
+				return false;
+			}
+		}
+	}
+
+	function ajax_check()
+	{
+		if ($this->M_sekolah->is_logged_in()) {
+			echo json_encode(1);
+		} else {
+			echo json_encode(0);
+		}
+	}
+
+	function insert_siswa()
+	{
+		// $data = array(
+		// 	'nisn' => $this->input->post('nisn'),
+		// 	'npsn' => $this->input->post('npsn'),
+		// 	'nm_sekolah' => $this->input->post('nm_sekolah'),
+		// 	'nama' => $this->input->post('nama'),
+		// 	'email' => $this->input->post('nisnn'),
+		// 	'email_alter' => $this->input->post('emailal'),
+		// 	'id_region' => $this->input->post('id_region'),
+		// 	'alamat' => $this->input->post('alamat'),
+		// 	'tgl_lahir' => $this->input->post('tgl_lahir'),
+		// 	'no_hp' => $this->input->post('no_hps'),
+		// 	'id_sekolah' => $this->input->post('id_sekolah'),
+		// 	'xcreate_user' => null,
+		// 	'xcreate_date' => date('Y-m-d h:i:s')
+		// );
+		// $cekk = $this->M_sekolah->cek_email($data['email'])->num_rows();
+		// if ($cekk > 0) {
+		// 	$result = array('success' => false, 'msg' => 'Email Sudah Terdaftar!');
+		// } else if ($this->input->post('no_hps') == null) {
+		// 	$result = array('success' => false, 'msg' => 'Harap Semua Data Diisi');
+		// } else if ($this->input->post('emailal') == null) {
+		// 	$result = array('success' => false, 'msg' => 'Harap Semua Data Diisi');
+		// } else {
+		// 	$result = $this->M_sekolah->insert_siswa($data);
+		// 	$result = array('success' => true, 'email' => $data['email'], 'npsn' => $data['npsn']);
+		// }
+		// echo json_encode($result);
+
+
+		$data = array(
+			'nisn' => $this->input->post('nisn'),
+			'npsn' => $this->input->post('npsn'),
+			'nm_sekolah' => $this->input->post('nm_sekolah'),
+			'nama' => $this->input->post('nama'),
+			'email' => $this->input->post('nisnn'),
+			'email_alter' => $this->input->post('emailal'),
+			'id_region' => $this->input->post('id_region'),
+			'alamat' => $this->input->post('alamat'),
+			'tgl_lahir' => $this->input->post('tgl_lahir'),
+			'no_hp' => $this->input->post('no_hps'),
+			'nama_orangtua' => $this->input->post('nama_ortu'),
+			'no_orangtua' => $this->input->post('no_ortu'),
+			'email_orangtua' => $this->input->post('email_ortu'),
+			'id_sekolah' => $this->input->post('id_sekolah'),
+			'sex' => $this->input->post('sex'),
+			'nama_orangtua' => $this->input->post('nama_ortu'),
+			'no_orangtua' => $this->input->post('no_ortu'),
+			'email_orangtua' => $this->input->post('email_ortu'),
+			'xcreate_user' => null,
+			'xcreate_date' => date('Y-m-d h:i:s')
+		);
+
+		$ch = curl_init();
+
+		curl_setopt($ch, CURLOPT_URL, "http://10.10.22.41/zimbra-api/index.php/api/emailexist");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, "emailaccount=" . $data['email']);
+
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		$result = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$response = ($httpCode == 200) ? true : false;
+
+		curl_close($ch);
+		if ($response) {
+			$result = array('success' => false, 'msg' => 'Email Sudah Terdaftar!');
+		} else {
+			// $result = json_encode(array('success' => false, 'msg' => 'Data Email Tidak Ditemukan'));
+
+			$ch2 = curl_init();
+
+			curl_setopt($ch2, CURLOPT_URL, "http://10.10.22.41/zimbra-api/index.php/api/createaccount");
+			curl_setopt($ch2, CURLOPT_POST, 1);
+			curl_setopt(
+				$ch2,
+				CURLOPT_POSTFIELDS,
+				"emailaddress=" . $data['email'] . "&sn=" . $data['nama'] . "&password=" . $data['npsn']
+			);
+
+			curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+
+			$result = curl_exec($ch2);
+			$httpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+			$response = ($httpCode == 200) ? true : false;
+
+			curl_close($ch2);
+			if ($response) {
+				$this->M_sekolah->insert_siswa($data);
+				// $data1 = array(
+				//     'keterangan' => 'create email siswa',
+				//     'ket_waktu' => date('Y-m-d h:i:s'),
+				//     'userid' => $this->load->get_var('user_info')->userid
+				// );
+				// $this->M_sekolah->log_activity($data1);
+				$result = array('success' => true, 'email' => $data['email'], 'npsn' => $data['npsn'], 'msg' => 'Email Berhasil Didaftarkan!');
+				// $result = array('success' => true, 'msg' => 'Email Berhasil Didaftarkan!');
+			} else {
+				$result = array('success' => false, 'msg' => $result);
+				// $result = array('success' => false, 'msg' => 'Terjadi Masalah pada Server Email!');
+			}
+		}
+
+
+		echo json_encode($result);
+	}
+
+	function cek_data()
+	{
+		$data = array(
+			'nuptk' => $this->input->post('nuptk'),
+			'sekolah' => $this->input->post('sekolah')
+		);
+
+		$cek = $this->M_sekolah->get_nuptk($data['nuptk'])->num_rows();
+		$cekk = $this->M_sekolah->cek_sekolah($data['sekolah'])->num_rows();
+		if ($cek > 0) {
+			$result = array('success' => false, 'msg' => 'NUPTK Sudah ada');
+		} else if ($cekk >= 3) {
+			$result = array('success' => false, 'msg' => 'Sekolah sudah melebih batas kuota');
+		} else if ($this->input->post('sekolah') == null) {
+			$result = array('success' => false, 'msg' => 'Harap semua data diisi!');
+		} else {
+			$result = array('success' => true);
+			$data = $this->M_sekolah->cek_sekolah2($data['sekolah'])->row();
+			$result['id_sekolah'] = $data->id_sekolah;
+			$result['id_region'] = $data->id_region;
+		}
+
+
+		echo json_encode($result);
+	}
+
+	function insert_sd()
+	{
+		$data = array(
+			'nuptk' => $this->input->post('nuptk'),
+			// 'nik' => $this->input->post('nik'),
+			'sekolah' => $this->input->post('sekolah'),
+			'nama' => $this->input->post('nama2'),
+			'email' => $this->input->post('email2'),
+			'no_hp' => $this->input->post('no_hp'),
+			'password' => $this->input->post('passs'),
+			'id_sekolah' => $this->input->post('id_sekolah'),
+			'id_region' => $this->input->post('id_region'),
+			'sex' => $this->input->post('sex'),
+			'statuss' => '1'
+		);
+		$data1 = array(
+			'name' => $this->input->post('nama2'),
+			'username' => $this->input->post('nuptk'),
+			'password' => password_hash($this->input->post('passs'), PASSWORD_BCRYPT),
+			'roleid' => '9',
+			'id_sekolah' => $this->input->post('id_sekolah'),
+			'xcreate_date' => date('Y-m-d h:i:s')
+		);
+		if ($this->input->post('nama2') == null) {
+			$result = array('success' => false, 'msg' => 'Harap semua data diisi');
+		} else if ($this->input->post('email2') == null) {
+			$result = array('success' => false, 'msg' => 'Harap semua data diisi');
+		} else if ($this->input->post('no_hp') == null) {
+			$result = array('success' => false, 'msg' => 'Harap semua data diisi');
+		} else if ($this->input->post('passs') == null) {
+			$result = array('success' => false, 'msg' => 'Harap semua data diisi');
+		} else {
+			$result = $this->M_sekolah->insert_dyn_user($data1);
+			$result = $this->M_sekolah->insert_sekolah($data);
+			$result = array('success' => true, 'nuptk' => $data['nuptk'], 'password' => $data['password'], 'email' => $data['email']);
+		}
+		echo json_encode($result);
+	}
+
+	// public function send_mail_forget() {
+	// $nuptk = $this->input->post('nuptk');
+	// $nik = $this->input->post('nik');
+	// $datajson = $this->M_sekolah->cek_send_mail($nuptk,$nik)->result();
+	// $config = array(
+	//     'protocol' => 'smtp',
+	//     'smtp_host' => 'ssl://smtp.googlemail.com',
+	//     'smtp_port' => 465,
+	//     'smtp_user' =>'zfnn122@gmail.com',
+	//     'smtp_pass' =>'Gatau1234',
+	//     'mailtype' => 'html',
+	//     'charset' => 'iso-8859-1'
+	// );
+
+	// $this->load->library('email');
+	// $this->email->initialize($config);
+	// $this->email->set_newline("\r\n");
+	// $this->email->from('', 'Email Siswa');
+	// foreach($datajson as $row){
+	// $this->email->to($row->email);
+	// $this->email->subject('Reset Password');
+	// $this->email->message('Klik link di bawah ini jika anda ingin reset password ');
+	// }
+
+	// if($this->email->send()){
+	// 	$this->load->view('login');
+	// }else{
+
+	// }
+	// $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+	// 	$nuptk = $this->input->post('nuptk');
+	// 	$nik = $this->input->post('nik');
+	// 	$datajson = $this->M_sekolah->cek_send_mail($nuptk,$nik)->result();
+	// 	foreach($datajson as $row){
+	// 	$this->form_validation->set_rules($row->email);
+	// 	if($this->form_validation->run()){
+	// 		$email = $row->email;
+	// 		$reset_key =  random_string('alnum', 50);
+
+	// 		if($this->M_sekolah->update_password($email,$reset_key))
+	// 		{
+
+	// 	    	$this->load->library('email');
+	// 			$config = array();
+	// 			$config['charset'] = 'utf-8';
+	// 			$config['useragent'] = 'Codeigniter';
+	// 			$config['protocol']= "smtp";
+	// 			$config['mailtype']= "html";
+	// 			$config['smtp_host']= "ssl://smtp.gmail.com";//pengaturan smtp
+	// 			$config['smtp_port']= "465";
+	// 			$config['smtp_timeout']= "5";
+	// 			$config['smtp_user']= "zfnn122@gmail.com"; // isi dengan email kamu
+	// 			$config['smtp_pass']= "Gatau1234"; // isi dengan password kamu
+	// 			$config['crlf']="\r\n"; 
+	// 			$config['newline']="\r\n"; 
+	// 			$config['wordwrap'] = TRUE;
+	// 			//memanggil library email dan set konfigurasi untuk pengiriman email
+
+	// 			$this->email->initialize($config);
+	// 			//konfigurasi pengiriman
+	// 			$this->email->from($config['smtp_user']);
+	// 			$this->email->to($row->email);
+	// 			$this->email->subject("Reset your password");
+
+	// 			$message = "<p>Anda melakukan permintaan reset password</p>";
+	// 			$message .= "<a href='".site_url('login_portal/reset_password/'.$reset_key)."'>klik reset password</a>";
+	// 			$this->email->message($message);
+
+	// 			if($this->email->send())
+	// 			{
+	// 				echo "silahkan cek email <b>".$row->email.'</b> untuk melakukan reset password';
+	// 			}else
+	// 			{
+	// 				echo "Berhasil melakukan registrasi, gagal mengirim verifikasi email";
+	// 			}
+
+	// 			echo "<br><br><a href='".site_url("member-login")."'>Kembali ke Menu Login</a>";
+
+	// 		}else {
+	// 			die("Email yang anda masukan belum terdaftar");
+	// 		}
+	// 	} else{
+	// 		$this->load->view('login');
+	// 	}
+	// }
+	// }
+
+	public function cek_data_admin(){
+		$data = array(
+			'nuptk' => $this->input->post('nuptk'),
+			'nik' => $this->input->post('nik')
+		);
+
+		$cek_nuptk = $this->M_sekolah->cek_nuptk_email($data['nuptk'])->num_rows();
+		$cek_nuptk2 = $this->M_sekolah->cek_nuptk_email2($data['nuptk'], $data['nik'])->num_rows();
+		if ($cek_nuptk == 0) {
+			$result = array('success' => false, 'msg' => 'NUPTK tidak ada');
+		} else if ($cek_nuptk2 > 0) {
+			$result = array('success' => true);
+		} else {
+			$result = array('success' => false, 'msg' => 'NUPTK tidak sesuai nik');
+		}
+		echo json_encode($result);
+	}
+	public function email_reset_password_validation()
+	{
+		// $nuptk = $this->input->post('nuptk');
+		// $nik = $this->input->post('nik');
+		// $datajson = $this->M_sekolah->cek_send_mail($nuptk,$nik)->result();
+		$this->load->helper('string');
+		$this->form_validation->set_rules('nuptk', 'NUPTK', 'required');
+		$this->form_validation->set_rules('nik', 'NIK', 'required');
+		if ($this->form_validation->run()) {
+			// foreach($datajson as $row){
+			// $email = 'zfnn122@gmail.com';
+			// $reset_key =  random_string('alnum', 50);
+			$data = array(
+				'nuptk' => $this->input->post('nuptk'),
+				'nik' => $this->input->post('nik')
+			);
+			$datajson = $this->M_sekolah->cek_send_mail($data['nuptk'], $data['nik'])->result();
+
+			foreach ($datajson as $row) {
+				$email = $row->email;
+				$reset_key =  random_string('alnum', 50);
+			}
+			
+				
+				$data = $this->M_sekolah->cek_nuptk_email2($data['nuptk'], $data['nik'])->row();
+				// $data = $this->M_sekolah->cek_sekolah2($data['sekolah'])->row();
+				$result['email'] = $data->email;
+				$this->M_sekolah->update_reset_key($email, $reset_key);
+				
+				// PHPMailer
+				$mail = new PHPMailer();
+				$mail->isSMTP();
+				$mail->Host     = 'mail.intens.co.id';
+				$mail->Port     = 465;
+				$mail->SMTPAuth = true;
+				$mail->Username = "adminemail@intens.co.id";
+				$mail->Password = "adminemail1234";
+				$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;      
+				$mail->isHTML(true);
+
+				$mail->setFrom("adminemail@intens.co.id", "Email Admin Sekolah");
+				// $mail->addAddress($email);
+				$mail->addAddress($email);
+				// Email subject
+				$mail->Subject = "Permintaan Ganti Password";
+				// $message = "<p>Anda melakukan permintaan reset password</p>";
+				// $message .= "<a href='" . site_url('login_portal/reset_password/' . $reset_key) . "'>klik reset password</a>";
+				$message = '
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta name="viewport" content="width=320, initial-scale=1" />
+      <title>Airmail Confirm</title>
+      <style type="text/css">
+    
+        /* ----- Client Fixes ----- */
+    
+        /* Force Outlook to provide a "view in browser" message */
+        #outlook a {
+          padding: 0;
+        }
+    
+        /* Force Hotmail to display emails at full width */
+        .ReadMsgBody {
+          width: 100%;
+        }
+    
+        .ExternalClass {
+          width: 100%;
+        }
+    
+        /* Force Hotmail to display normal line spacing */
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+          line-height: 100%;
+        }
+    
+    
+         /* Prevent WebKit and Windows mobile changing default text sizes */
+        body, table, td, p, a, li, blockquote {
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
+        }
+    
+        /* Remove spacing between tables in Outlook 2007 and up */
+        table, td {
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+    
+        /* Allow smoother rendering of resized image in Internet Explorer */
+        img {
+          -ms-interpolation-mode: bicubic;
+        }
+    
+         /* ----- Reset ----- */
+    
+        html,
+        body,
+        .body-wrap,
+        .body-wrap-cell {
+          margin: 0;
+          padding: 0;
+          background: #ffffff;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #464646;
+          text-align: left;
+        }
+    
+        img {
+          border: 0;
+          line-height: 100%;
+          outline: none;
+          text-decoration: none;
+        }
+    
+        table {
+          border-collapse: collapse !important;
+        }
+    
+        td, th {
+          text-align: left;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #464646;
+          line-height:1.5em;
+        }
+    
+        b a,
+        .footer a {
+          text-decoration: none;
+          color: #464646;
+        }
+    
+        a.blue-link {
+          color: blue;
+          text-decoration: underline;
+        }
+    
+        /* ----- General ----- */
+    
+        td.center {
+          text-align: center;
+        }
+    
+        .left {
+          text-align: left;
+        }
+    
+        .body-padding {
+          padding: 24px 40px 40px;
+        }
+    
+        .border-bottom {
+          border-bottom: 1px solid #D8D8D8;
+        }
+    
+        table.full-width-gmail-android {
+          width: 100% !important;
+        }
+    
+    
+        /* ----- Header ----- */
+        .header {
+          font-weight: bold;
+          font-size: 16px;
+          line-height: 16px;
+          height: 16px;
+          padding-top: 19px;
+          padding-bottom: 7px;
+        }
+    
+        .header a {
+          color: #464646;
+          text-decoration: none;
+        }
+    
+        /* ----- Footer ----- */
+    
+        .footer a {
+          font-size: 12px;
+        }
+      </style>
+    
+      <style type="text/css" media="only screen and (max-width: 650px)">
+        @media only screen and (max-width: 650px) {
+          * {
+            font-size: 16px !important;
+          }
+    
+          table[class*="w320"] {
+            width: 320px !important;
+          }
+    
+          td[class="mobile-center"],
+          div[class="mobile-center"] {
+            text-align: center !important;
+          }
+    
+          td[class*="body-padding"] {
+            padding: 20px !important;
+          }
+    
+          td[class="mobile"] {
+            text-align: right;
+            vertical-align: top;
+          }
+        }
+      </style>
+    
+    </head>
+    <body style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+     <td valign="top" align="left" width="100%" style="background:repeat-x url(https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2) #f9f8f8;">
+     <center>
+    
+       <table class="w320 full-width-gmail-android" bgcolor="#f9f8f8" background="https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2" style="background-color:transparent" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td width="100%" height="48" valign="top">
+                <!--[if gte mso 9]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="mso-width-percent:1000;height:49px;">
+                  <v:fill type="tile" src="https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2" color="#ffffff" />
+                  <v:textbox inset="0,0,0,0">
+                <![endif]-->
+                  <table class="full-width-gmail-android" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                      <td class="header center" width="100%">
+                        <a href="https://emailsiswa.layanan.go.id/">
+                          Email Siswa Nasional
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                <!--[if gte mso 9]>
+                  </v:textbox>
+                </v:rect>
+                <![endif]-->
+            </td>
+          </tr>
+        </table>
+    
+        <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#ffffff">
+          <tr>
+            <td align="center">
+              <center>
+                <table class="w320" cellspacing="0" cellpadding="0" width="500">
+                  <tr>
+                    <td class="body-padding mobile-padding">
+    
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="text-align:center; font-size:30px; padding-bottom:20px;">
+                          Permintaan Pergantian Password!
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="mobile-center" align="left" style="padding-bottom:20px; padding:40px 0;">
+                        Saat ini anda mengajukan permohonan lupa password.klik tombol dibawah ini untuk merubah password anda. Link akan kedaluarsa dalam beberapa menit!<br>
+						  <br>
+						  <div class="mobile-center" align="center"><!--[if mso]>
+						  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="#" style="height:38px;v-text-anchor:middle;width:190px;" arcsize="11%" strokecolor="#407429" fill="t">
+							<v:fill type="tile" src="https://www.filepicker.io/api/file/N8GiNGsmT6mK6ORk00S7" color="#41CC00" />
+							<w:anchorlock/>
+							<center style="color:#ffffff;font-family:sans-serif;font-size:17px;font-weight:bold;">Ubah Password</center>
+						  </v:roundrect>
+						<![endif]--><a href="'. site_url('login_portal/reset_password/' . $reset_key) .'"
+						style="background-color:#41CC00;background-image:url(https://www.filepicker.io/api/file/N8GiNGsmT6mK6ORk00S7);border:1px solid #407429;border-radius:4px;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:17px;font-weight:bold;text-shadow: -1px -1px #47A54B;line-height:37px;text-align:center;text-decoration:none;width:190px;-webkit-text-size-adjust:none;mso-hide:all;">Ubah Password</a></div>
+                          <br>
+                          Harap berhati-hati dalam membuat password baru anda.kami sarankan untuk tidak menggunakan tanggal lahir,nomor telepon yang bisa diketahui orang lain.Segala bentuk penyalahgunaan password bukan tanggung jawab Tim Pengelola Email Siswa.
+                        </td>
+                      </tr>
+                    </table>
+    
+                    <table cellspacing="0" cellpadding="0" width="100%">
+                      <tr>
+                        <td class="left" style="text-align:left;">
+                          Regards,
+                          <br>
+                        </td>
+                      </tr>
+                      <tr>
+                      <td class="left" width="129" height="20" style="text-align:left;">
+                        <br>
+                        Tim Pengelola Email Nasional
+                        </td>
+                      </tr>
+                    </table>
+    
+                    </td>
+                  </tr>
+                </table>
+              </center>
+            </td>
+          </tr>
+        </table>
+    
+        <table class="w320" bgcolor="#E5E5E5" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td style="border-top:1px solid #B3B3B3; border-bottom:1px solid #B3B3B3;" align="center">
+              <center>
+                <table class="w320" cellspacing="0" cellpadding="0" width="500" bgcolor="#E5E5E5">
+                  <tr>
+                    <td align="center" style="padding:25px; text-align:center">
+                      <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#E5E5E5">
+                        <tr>
+                          <td class="center footer" style="font-size:12px;">
+                            <a href="#">Contact Us</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span class="footer-group">
+                              <a href="#">Support</a>
+                            </span>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </center>
+            </td>
+          </tr>
+        </table>
+    
+      </center>
+      </td>
+    </tr>
+    </table>
+    </body>
+    </html>';
+				$mail->Body = $message;
+         
+				// Send email
+				return $mail->send();
+
+				// $this->load->library('email');
+				// $config = array();
+				// $config['charset'] = 'utf-8';
+				// $config['useragent'] = 'Codeigniter';
+				// $config['protocol'] = "smtp";
+				// $config['mailtype'] = "html";
+				// $config['smtp_host'] = "ssl://smtp.gmail.com"; //pengaturan smtp
+				// $config['smtp_port'] = "465";
+				// $config['smtp_timeout'] = "5";
+				// $config['smtp_user'] = "zfnn122@gmail.com"; // isi dengan email kamu
+				// $config['smtp_pass'] = "Gatau1234"; // isi dengan password kamu
+				// $config['crlf'] = "\r\n";
+				// $config['newline'] = "\r\n";
+				// $config['wordwrap'] = TRUE;
+				// //memanggil library email dan set konfigurasi untuk pengiriman email
+
+				// $this->email->initialize($config);
+				// //konfigurasi pengiriman
+				// $this->email->from($config['smtp_user']);
+				// $this->email->to($email);
+				// $this->email->subject("Reset your password");
+
+				// $message = "<p>Anda melakukan permintaan reset password</p>";
+				// $message .= "<a href='" . site_url('login_portal/reset_password/' . $reset_key) . "'>klik reset password</a>";
+				// $this->email->message($message);
+				// $this->email->send();
+			
+
+
+			// $result = array('success' => true, 'msg' => "silahkan cek email <b>" . $email . "</b> untuk melakukan reset password");
+			// echo "<br><br><a href='" . site_url("login_portal") . "'>Kembali ke Menu Login</a>";
+			// }
+		} else {
+			$this->load->view('login');
+		}
+	}
+
+	public function reset_password()
+	{
+		$reset_key = $this->uri->segment(3);
+
+		if (!$reset_key) {
+			die('Jangan Dihapus');
+		}
+
+		if ($this->M_sekolah->check_reset_key($reset_key) == 1) {
+			$data['nuptk'] = $this->M_sekolah->get_nuptk_username($reset_key)->result();
+			$this->load->view('reset_password', $data);
+		} else {
+			die("reset key salah");
+		}
+	}
+
+	public function reset_password_validation()
+	{
+		$this->form_validation->set_rules('password', 'Password', 'required|min_length[6]|matches[retype_password]');
+		$this->form_validation->set_rules('retype_password', 'Retype Password', 'required|min_length[6]|matches[password]');
+
+		if ($this->form_validation->run()) {
+			$reset_key = $this->input->post('reset_key');
+			$password = $this->input->post('password');
+			$password2 = password_hash($password, PASSWORD_BCRYPT);
+			$username = $this->input->post('nuptk');
+			if ($this->M_sekolah->reset_password($reset_key, $password) && $this->M_sekolah->reset_password2($username, $password2)) {
+				$result = array('success' => true, 'msg' => 'Kata sandi berhasil di ubah');
+			} else {
+				  $result = array('success' => false, 'msg' => 'Error!');
+			}
+		} else {
+			$result = array('success' => false);
+		}
+		echo json_encode($result);
+	}
+
+	public function cek_data_admin_reg(){
+		$data = array(
+			'username' => $this->input->post('usernamereg'),
+			'email' => $this->input->post('emailreg')
+		);
+
+		$cek_adminreg = $this->M_user->cek_adminreg($data['username'])->num_rows();
+		$cek_adminreg2 = $this->M_user->cek_adminreg_email($data['username'], $data['email'])->num_rows();
+		if ($cek_adminreg == 0) {
+			$result = array('success' => false, 'msg' => 'Username tidak ada');
+		} else if ($cek_adminreg2 > 0) {
+			$result = array('success' => true);
+		} else {
+			$result = array('success' => false, 'msg' => 'Username tidak sesuai dengan Email');
+		}
+		echo json_encode($result);
+	}
+
+	public function email_reset_password_validation_reg()
+	{
+		// $nuptk = $this->input->post('nuptk');
+		// $nik = $this->input->post('nik');
+		// $datajson = $this->M_user->cek_send_mail($nuptk,$nik)->result();
+		$this->load->helper('string');
+		$this->form_validation->set_rules('usernamereg', 'USERNAME', 'required');
+		$this->form_validation->set_rules('emailreg', 'EMAIL', 'required');
+		if ($this->form_validation->run()) {
+			// foreach($datajson as $row){
+			// $email = 'zfnn122@gmail.com';
+			// $reset_key =  random_string('alnum', 50);
+			$data = array(
+				'username' => $this->input->post('usernamereg'),
+				'email' => $this->input->post('emailreg')
+			);
+
+				$email = $this->input->post('emailreg');
+				$reset_key =  random_string('alnum', 50);
+				$update = date("Y-m-d H:i:s");
+			
+			
+				
+				$data = $this->M_user->cek_adminreg_email($data['username'], $data['email'])->row();
+				// $data = $this->M_user->cek_sekolah2($data['sekolah'])->row();
+				$result['email'] = $data->email;
+				$this->M_user->update_reset_key($email, $reset_key, $update);
+				
+				// PHPMailer
+				$mail = new PHPMailer();
+				$mail->isSMTP();
+				$mail->Host     = 'mail.intens.co.id';
+				$mail->Port     = 465;
+				$mail->SMTPAuth = true;
+				$mail->Username = "adminemail@intens.co.id";
+				$mail->Password = "adminemail1234";
+				$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;      
+				$mail->isHTML(true);
+
+				$mail->setFrom("adminemail@intens.co.id", "Email Admin Regional");
+				$mail->addAddress($email);
+				// Email subject
+				$mail->Subject = "Permintaan Ganti Password";
+				// $message = "<p>Anda melakukan permintaan reset password</p>";
+				// $message .= "<a href='" . site_url('login_portal/reset_password_reg/' . $reset_key) . "'>klik reset password</a>";
+				$message = '
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta name="viewport" content="width=320, initial-scale=1" />
+      <title>Airmail Confirm</title>
+      <style type="text/css">
+    
+        /* ----- Client Fixes ----- */
+    
+        /* Force Outlook to provide a "view in browser" message */
+        #outlook a {
+          padding: 0;
+        }
+    
+        /* Force Hotmail to display emails at full width */
+        .ReadMsgBody {
+          width: 100%;
+        }
+    
+        .ExternalClass {
+          width: 100%;
+        }
+    
+        /* Force Hotmail to display normal line spacing */
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+          line-height: 100%;
+        }
+    
+    
+         /* Prevent WebKit and Windows mobile changing default text sizes */
+        body, table, td, p, a, li, blockquote {
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
+        }
+    
+        /* Remove spacing between tables in Outlook 2007 and up */
+        table, td {
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+    
+        /* Allow smoother rendering of resized image in Internet Explorer */
+        img {
+          -ms-interpolation-mode: bicubic;
+        }
+    
+         /* ----- Reset ----- */
+    
+        html,
+        body,
+        .body-wrap,
+        .body-wrap-cell {
+          margin: 0;
+          padding: 0;
+          background: #ffffff;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #464646;
+          text-align: left;
+        }
+    
+        img {
+          border: 0;
+          line-height: 100%;
+          outline: none;
+          text-decoration: none;
+        }
+    
+        table {
+          border-collapse: collapse !important;
+        }
+    
+        td, th {
+          text-align: left;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 14px;
+          color: #464646;
+          line-height:1.5em;
+        }
+    
+        b a,
+        .footer a {
+          text-decoration: none;
+          color: #464646;
+        }
+    
+        a.blue-link {
+          color: blue;
+          text-decoration: underline;
+        }
+    
+        /* ----- General ----- */
+    
+        td.center {
+          text-align: center;
+        }
+    
+        .left {
+          text-align: left;
+        }
+    
+        .body-padding {
+          padding: 24px 40px 40px;
+        }
+    
+        .border-bottom {
+          border-bottom: 1px solid #D8D8D8;
+        }
+    
+        table.full-width-gmail-android {
+          width: 100% !important;
+        }
+    
+    
+        /* ----- Header ----- */
+        .header {
+          font-weight: bold;
+          font-size: 16px;
+          line-height: 16px;
+          height: 16px;
+          padding-top: 19px;
+          padding-bottom: 7px;
+        }
+    
+        .header a {
+          color: #464646;
+          text-decoration: none;
+        }
+    
+        /* ----- Footer ----- */
+    
+        .footer a {
+          font-size: 12px;
+        }
+      </style>
+    
+      <style type="text/css" media="only screen and (max-width: 650px)">
+        @media only screen and (max-width: 650px) {
+          * {
+            font-size: 16px !important;
+          }
+    
+          table[class*="w320"] {
+            width: 320px !important;
+          }
+    
+          td[class="mobile-center"],
+          div[class="mobile-center"] {
+            text-align: center !important;
+          }
+    
+          td[class*="body-padding"] {
+            padding: 20px !important;
+          }
+    
+          td[class="mobile"] {
+            text-align: right;
+            vertical-align: top;
+          }
+        }
+      </style>
+    
+    </head>
+    <body style="padding:0; margin:0; display:block; background:#ffffff; -webkit-text-size-adjust:none">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+     <td valign="top" align="left" width="100%" style="background:repeat-x url(https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2) #f9f8f8;">
+     <center>
+    
+       <table class="w320 full-width-gmail-android" bgcolor="#f9f8f8" background="https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2" style="background-color:transparent" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td width="100%" height="48" valign="top">
+                <!--[if gte mso 9]>
+                <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="mso-width-percent:1000;height:49px;">
+                  <v:fill type="tile" src="https://www.filepicker.io/api/file/al80sTOMSEi5bKdmCgp2" color="#ffffff" />
+                  <v:textbox inset="0,0,0,0">
+                <![endif]-->
+                  <table class="full-width-gmail-android" cellspacing="0" cellpadding="0" border="0" width="100%">
+                    <tr>
+                      <td class="header center" width="100%">
+                        <a href="https://emailsiswa.layanan.go.id/">
+                          Email Siswa Nasional
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                <!--[if gte mso 9]>
+                  </v:textbox>
+                </v:rect>
+                <![endif]-->
+            </td>
+          </tr>
+        </table>
+    
+        <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#ffffff">
+          <tr>
+            <td align="center">
+              <center>
+                <table class="w320" cellspacing="0" cellpadding="0" width="500">
+                  <tr>
+                    <td class="body-padding mobile-padding">
+    
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="text-align:center; font-size:30px; padding-bottom:20px;">
+                          Permintaan Pergantian Password!
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="mobile-center" align="left" style="padding-bottom:20px; padding:40px 0;">
+                        Saat ini anda mengajukan permohonan lupa password.klik tombol dibawah ini untuk merubah password anda. Link akan kedaluarsa dalam beberapa menit!<br>
+						  <br>
+						  <div class="mobile-center" align="center"><!--[if mso]>
+						  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="#" style="height:38px;v-text-anchor:middle;width:190px;" arcsize="11%" strokecolor="#407429" fill="t">
+							<v:fill type="tile" src="https://www.filepicker.io/api/file/N8GiNGsmT6mK6ORk00S7" color="#41CC00" />
+							<w:anchorlock/>
+							<center style="color:#ffffff;font-family:sans-serif;font-size:17px;font-weight:bold;">Ubah Password</center>
+						  </v:roundrect>
+						<![endif]--><a href="'. site_url('login_portal/reset_password_reg/' . $reset_key) .'"
+						style="background-color:#41CC00;background-image:url(https://www.filepicker.io/api/file/N8GiNGsmT6mK6ORk00S7);border:1px solid #407429;border-radius:4px;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:17px;font-weight:bold;text-shadow: -1px -1px #47A54B;line-height:37px;text-align:center;text-decoration:none;width:190px;-webkit-text-size-adjust:none;mso-hide:all;">Ubah Password</a></div>
+                          <br>
+                          Harap berhati-hati dalam membuat password baru anda.kami sarankan untuk tidak menggunakan tanggal lahir,nomor telepon yang bisa diketahui orang lain.Segala bentuk penyalahgunaan password bukan tanggung jawab Tim Pengelola Email Siswa.
+                        </td>
+                      </tr>
+                    </table>
+    
+                    <table cellspacing="0" cellpadding="0" width="100%">
+                      <tr>
+                        <td class="left" style="text-align:left;">
+                          Regards,
+                          <br>
+                        </td>
+                      </tr>
+                      <tr>
+                      <td class="left" width="129" height="20" style="text-align:left;">
+                        <br>
+                        Tim Pengelola Email Nasional
+                        </td>
+                      </tr>
+                    </table>
+    
+                    </td>
+                  </tr>
+                </table>
+              </center>
+            </td>
+          </tr>
+        </table>
+    
+        <table class="w320" bgcolor="#E5E5E5" cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tr>
+            <td style="border-top:1px solid #B3B3B3; border-bottom:1px solid #B3B3B3;" align="center">
+              <center>
+                <table class="w320" cellspacing="0" cellpadding="0" width="500" bgcolor="#E5E5E5">
+                  <tr>
+                    <td align="center" style="padding:25px; text-align:center">
+                      <table cellspacing="0" cellpadding="0" width="100%" bgcolor="#E5E5E5">
+                        <tr>
+                          <td class="center footer" style="font-size:12px;">
+                            <a href="#">Contact Us</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span class="footer-group">
+                              <a href="#">Support</a>
+                            </span>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </center>
+            </td>
+          </tr>
+        </table>
+    
+      </center>
+      </td>
+    </tr>
+    </table>
+    </body>
+    </html>';
+				$mail->Body = $message;
+         
+				// Send email
+				return $mail->send();
+
+				// $this->load->library('email');
+				// $config = array();
+				// $config['charset'] = 'utf-8';
+				// $config['useragent'] = 'Codeigniter';
+				// $config['protocol'] = "smtp";
+				// $config['mailtype'] = "html";
+				// $config['smtp_host'] = "ssl://smtp.gmail.com"; //pengaturan smtp
+				// $config['smtp_port'] = "465";
+				// $config['smtp_timeout'] = "5";
+				// $config['smtp_user'] = "zfnn122@gmail.com"; // isi dengan email kamu
+				// $config['smtp_pass'] = "Gatau1234"; // isi dengan password kamu
+				// $config['crlf'] = "\r\n";
+				// $config['newline'] = "\r\n";
+				// $config['wordwrap'] = TRUE;
+				// //memanggil library email dan set konfigurasi untuk pengiriman email
+
+				// $this->email->initialize($config);
+				// //konfigurasi pengiriman
+				// $this->email->from($config['smtp_user']);
+				// $this->email->to($email);
+				// $this->email->subject("Reset your password");
+
+				// $message = "<p>Anda melakukan permintaan reset password</p>";
+				// $message .= "<a href='" . site_url('login_portal/reset_password/' . $reset_key) . "'>klik reset password</a>";
+				// $this->email->message($message);
+				// $this->email->send();
+			
+
+
+			// $result = array('success' => true, 'msg' => "silahkan cek email <b>" . $email . "</b> untuk melakukan reset password");
+			// echo "<br><br><a href='" . site_url("login_portal") . "'>Kembali ke Menu Login</a>";
+			// }
+		} else {
+			$this->load->view('login');
+		}
+	}
+
+	public function reset_password_reg()
+	{
+		$reset_key = $this->uri->segment(3);
+
+		if (!$reset_key) {
+			die('Jangan Dihapus');
+		}
+
+		if ($this->M_user->check_reset_key($reset_key) == 1) {
+			$time = $this->M_user->get_time_reset($reset_key)->result();
+			//add 1 hour to time
+			foreach($time as $row){
+				$update = $row->xupdate_reset;
+			}
+
+			$expired = date("Y-m-d H:i:s",strtotime('1 day',strtotime($update)));
+
+			if(time() <= strtotime($expired)){
+				$this->load->view('reset_password_reg');
+			  } else{
+				die("<h1 style='color: red;'><center>LINK KADALUARSA</h1>");
+			  }
+			} else{
+			  die("<h1 style='color: red;'><center>LINK KADALUARSA</h1>");
+			}
+	}
+
+	public function reset_password_validation_reg()
+	{
+		$this->form_validation->set_rules('password', 'Password', 'required|min_length[6]|matches[retype_password]');
+		$this->form_validation->set_rules('retype_password', 'Retype Password', 'required|min_length[6]|matches[password]');
+
+		if ($this->form_validation->run()) {
+			$reset_key = $this->input->post('reset_key');
+			$password = $this->input->post('password');
+			$password2 = password_hash($password, PASSWORD_BCRYPT);
+			if ($this->M_user->reset_password($reset_key, $password2)) {
+				$result = array('success' => true, 'msg' => 'Kata sandi berhasil di ubah');
+			} else {
+				  $result = array('success' => false, 'msg' => 'Error!');
+			}
+		} else {
+			$result = array('success' => false);
+		}
+		echo json_encode($result);
+	}
+
+	public function get_statistik(){
+		$datajson=$this->M_sekolah->get_statistik()->result();
+		$datachart="";
+		$i=0;
+		$jenjang = array();
+		$siswa = array();
+		foreach ($datajson as $row) {
+			array_push($jenjang, $row->jenjang);
+			array_push($siswa, $row->siswa);
+		}
+
+	    echo json_encode(array(
+	    					'succes' => true,
+	    					'jenjang' => $jenjang,
+	    					'jumlah_siswa' => $siswa,
+	    				));
+	}
+}

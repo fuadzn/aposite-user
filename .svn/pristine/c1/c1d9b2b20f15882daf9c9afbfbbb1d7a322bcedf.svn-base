@@ -1,0 +1,170 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class M_klinik extends CI_Model{
+	function __construct(){
+		parent::__construct();
+	}	
+	
+	function get_klinik($id){
+		return $this->db->query("SELECT * FROM data_klinik WHERE id = '$id'");
+	}
+	
+	function get_vklinik($id){
+		return $this->db->query("SELECT `a`.`id` AS `id`,`a`.`klinikid` AS `klinikid`,`a`.`nama` AS `nama`,`a`.`namasingkat` AS `namasingkat`,`a`.`alamat` AS `alamat`,`a`.`telp` AS `telp`,`a`.`email` AS `email`,`a`.`id_provinsi` AS `id_provinsi`,`b`.`nama` AS `nm_provinsi`,`a`.`id_kotakabupaten` AS `id_kotakabupaten`,`c`.`nama` AS `nm_kotakabupaten`,`a`.`id_kecamatan` AS `id_kecamatan`,`d`.`nama` AS `nm_kecamatann`,`a`.`id_kelurahandesa` AS `id_kelurahandesa`,`e`.`nama` AS `nm_kelurahandesa` FROM `data_klinik` AS a LEFT JOIN master_provinsi AS b ON `a`.`id_provinsi`=`b`.`id` LEFT JOIN master_kotakabupaten AS c ON `a`.`id_kotakabupaten`=`c`.`id` LEFT JOIN master_kecamatan AS d ON `a`.`id_kecamatan`=`d`.`id` LEFT JOIN master_kelurahandesa AS e ON `a`.`id_kelurahandesa`=`e`.`id` WHERE a.id='$id'");
+	}
+
+	function get_roles(){
+		return $this->db->query("SELECT * FROM dyn_role WHERE is_active = 1 AND id NOT IN (1,2) ORDER BY role ASC");
+	}
+	
+	
+	function get_all_user($id_klinik){
+		return $this->db->query("SELECT a.userid,a.name,a.username,a.roleid,b.role,a.deleted FROM dyn_user a LEFT JOIN dyn_role b ON b.id=a.roleid WHERE a.id_klinik='$id_klinik' AND a.roleid NOT IN (1,2) ORDER BY a.xcreate_date ASC");
+	}
+	
+	function get_auto_klinikid($id_prov){
+		$query = $this->db->query("SELECT RIGHT(klinikid,4) as klinikid FROM data_klinik WHERE LEFT(klinikid,2) = '".$id_prov."' ");
+		return $query->last_row();
+	}
+	
+	function klinikAdd($data){	
+		$this->load->library('uuid');
+        //Output a v4 UUID 
+        $id = $this->uuid->v4();
+		$this->db->set('id',"'".$id."'",FALSE);
+		$this->db->insert('data_klinik', $data);
+		return  $id;
+	}
+
+	function klinikEdit($data, $id){  
+        $this->db->where('id',$id); 
+        $this->db->update('data_klinik', $data);
+        return true;
+	}
+
+	function nm_provinsi($id) {
+		$this->db->from('master_provinsi');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kota($id) {
+		$this->db->from('master_kotakabupaten');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kecamatan($id) {
+		$this->db->from('master_kecamatan');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+	function nm_kelurahan($id) {
+		$this->db->from('master_kelurahandesa');
+		$this->db->where('id', $id);
+		$query = $this->db->get();
+		return $query->row();
+	}
+
+
+
+
+
+		
+	function exist($role){
+		$this->db->from('dyn_role');
+		$this->db->where('role',$role);	
+		return $this->db->select();	
+	}
+	
+	function roleMenuSave($id,&$data)
+	{	
+		$this->db->where('role_id', $id);
+		$this->db->delete('dyn_role_menu');
+		$temp =count($data);
+		for($i=0; $i<$temp;$i++){
+			$this->db->insert('dyn_role_menu',$data[$i]);
+		}
+		return true;
+	}
+
+	function getTest()
+	{
+		return $this->db->query("SELECT 'Ahmad Abbdul Ghani' as nama, 'ghani' as nama_singkat, 'Babakan Irigasi' as alamat, '' as jenis ");
+	}
+	
+	// function get_info($id)
+	// {
+	// 	$this->db->from('dyn_role');	
+	// 	$this->db->where('id',$id);
+	// 	$query = $this->db->get();
+		
+	// 	if($query->num_rows()==1)
+	// 	{
+	// 		return $query->row();
+	// 	}
+	// 	else
+	// 	{
+	// 		//Get empty base parent object, as $item_id is NOT an item
+	// 		$data_obj=new stdClass();
+
+	// 		//Get all the fields from items table
+	// 		$fields = $this->db->list_fields('dyn_role');
+
+	// 		foreach ($fields as $field)
+	// 		{
+	// 			$data_obj->$field='';
+	// 		}
+
+	// 		return $data_obj;
+	// 	}
+	// }
+	
+	// function save(&$data)
+	// {	
+	// 	if ($data["id"] == ''){
+	// 		$this->db->set('is_active', '1');
+	// 		$role = $data["role"];
+	// 		$deskripsi = $data["deskripsi"];
+	// 		// if($this->db->insert('dyn_role',$data))
+	// 		$query = $this->db->query("INSERT INTO dyn_role (is_active, role, deskripsi) VALUES ('1', '$role','$deskripsi')");
+	// 		if($query)
+	// 		{
+	// 			return true;
+	// 		}
+	// 		return false;
+	// 	}else{			
+	// 		$this->db->set('is_active', $data["is_active"]);
+	// 		$this->db->where('id', $data["id"]);
+	// 		return $this->db->update('dyn_role');
+	// 	}
+	// }
+	
+	// function delete($id)
+	// {
+	// 	$this->db->where('id',$id);	
+	// 	if ($this->db->delete('dyn_role')){
+	// 		return true;
+	// 	}else{			
+	// 		return false;
+	// 	}
+	// }
+	
+	// function get_menu_all($id){
+	// 	return $this->db->query("select b.page_id,
+	// 		CASE WHEN b.is_parent = 1 THEN CONCAT(LPAD(b.page_id,2,'0'),'00')
+	// 								ELSE CONCAT(LPAD(b.parent_id,2,'0'),LPAD(b.position,2,'0'))
+	// 		END AS urutan,
+	// 		CASE WHEN (b.is_parent = 1 or b.parent_id = 0) THEN b.title
+	// 								ELSE CONCAT('<i class=\"fa fa-angle-double-right fa-fw\"></i>',b.title)
+	// 		END AS title, IFNULL(a.role_id,0) as sts
+	// 		from dyn_role_menu a
+	// 		RIGHT JOIN 
+	// 		dyn_menu b
+	// 		on a.menu_id = b.page_id
+	// 		and a.role_id = $id
+	// 		order by urutan asc");
+	// }
+}
+?>

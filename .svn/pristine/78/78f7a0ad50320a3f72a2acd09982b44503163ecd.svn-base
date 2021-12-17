@@ -1,0 +1,616 @@
+<?php
+$this->load->view("layout/header2");
+?>
+
+
+
+<!-- Bagian Body -->
+<!-- <section id="dashboard-analytics"> -->
+
+<!-- <div class="form-group row"> -->
+<!-- <div class="col-12 mr-auto"> -->
+<div class="container-fluid" style="margin-bottom: 60px;">
+    <div class="row" style="background-color: #0f5ccd; ">
+        <div class="col-sm-6 my-auto">
+            <img src="<?= site_url(); ?>assets/images/siswa.png" class="img-fluid" alt="Responsive image" style="margin-top:150px;"><br><br><br><br><br><br><br><br><br>
+        </div>
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:white; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; " class=" font-weight-bold">Email Siswa Nasional</h1>
+            <p style="color: white; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;" class="">Kelola sekolah anda secara cermat dan tepat. Wujudkan sekolah unggulan berbasis teknologi yang terintegrasi.</p><br><br>
+            <div class="card " style="width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;">
+                <div class="card-body">
+                    <h4 class="mb-0" style="font-family: montserrat; color:#8779d5; ">Login Email Siswa</h4><br>
+                    <p class="">Selamat datang user, silahkan <br> login</p>
+                </div>
+                <div class="card-content">
+                    <div class="card-body pt-1">
+                        <?php
+                        $attributes = array('class' => '', 'id' => 'loginform');
+                        echo form_open('login_siswa/login_siswa_check', $attributes);
+                        ?>
+                        <fieldset class="form-label-group form-group position-relative has-icon-left">
+                            <input type="text" class="form-control" id="email" name="email" placeholder="Email Pengguna" required <?php
+                                                                                                                                    if ($username) {
+                                                                                                                                        echo 'value="' . $username . '"';
+                                                                                                                                    } else {
+                                                                                                                                        echo 'autofocus';
+                                                                                                                                    }
+                                                                                                                                    ?>>
+                            <div class="form-control-position">
+                                <i class="feather icon-user"></i>
+                            </div>
+                            <label for="email">Email Pengguna</label>
+                        </fieldset>
+
+                        <fieldset class="form-label-group position-relative has-icon-left">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Kata Sandi" required <?php
+                                                                                                                                        if ($username) {
+                                                                                                                                            echo 'autofocus';
+                                                                                                                                        }
+                                                                                                                                        ?>>
+                            <div class="form-control-position">
+                                <i class="feather icon-lock"></i>
+                            </div>
+                            <label for="password">Kata Sandi</label>
+                        </fieldset>
+                        <?php
+                        if (validation_errors()) {
+                            echo validation_errors();
+                        }
+                        ?>
+                        <div class="form-group d-flex justify-content-between align-items-center">
+                            <a href="Lupa_password/">Lupa Kata Sandi?</a>
+                        </div>
+                        <button type="submit" class="btn btn-primary float-right btn-inline">Masuk</button>
+                        <!-- <a type="button" href="<?php echo site_url('login_portal'); ?>" class="btn btn-warning mr-1 float-right btn-inline">Kembali</a> -->
+                        <?php echo form_close(); ?>
+                    </div>
+                </div>
+                <div class="login-footer">
+                    <div class="divider">
+                    </div>
+                    <div class="footer-btn d-inline">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Form Operator -->
+    <br><br><br><br><br><br>
+    <!-- Row 1 -->
+    <div class="row">
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:#8779d5; width: 48rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                  float: none; margin-bottom: 10px; margin-bottom: 10px;" class=" font-weight-bold">Form Login Operator</h1><br>
+            <div class="card " style="width: 48rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                  float: none; margin-bottom: 10px; margin-bottom: 10px;">
+                <div class="card-body">
+                    <h4 class="mb-0" style="font-family: montserrat; color:#8779d5; ">Hallo Operator</h4><br>
+                    <p class="">Selamat datang user, silahkan <br> login</p>
+                </div>
+                <div class="card-content">
+                    <div class="card-body pt-1">
+                        <?php
+                        $attributes = array('class' => '', 'id' => 'loginform');
+                        echo form_open('login_portal', $attributes);
+                        ?>
+                        <fieldset class="form-label-group form-group position-relative has-icon-left">
+                            <input type="text" class="form-control" id="username" name="username" placeholder="NUPTK Pengguna" required <?php
+                                                                                                                                        if ($username) {
+                                                                                                                                            echo 'value="' . $username . '"';
+                                                                                                                                        } else {
+                                                                                                                                            echo 'autofocus';
+                                                                                                                                        }
+                                                                                                                                        ?>>
+                            <div class="form-control-position">
+                                <i class="feather icon-user"></i>
+                            </div>
+                            <label for="username">NUPTK Pengguna</label>
+                        </fieldset>
+
+                        <fieldset class="form-label-group position-relative has-icon-left">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Kata Sandi" required <?php
+                                                                                                                                        if ($username) {
+                                                                                                                                            echo 'autofocus';
+                                                                                                                                        }
+                                                                                                                                        ?>>
+                            <div class="form-control-position">
+                                <i class="feather icon-lock"></i>
+                            </div>
+                            <label for="password">Kata Sandi</label>
+                        </fieldset>
+                        <?php
+                        if (validation_errors()) {
+                            echo validation_errors();
+                        }
+                        ?>
+                        <div class="form-group d-flex justify-content-between align-items-center">
+                            <a href="" data-toggle='modal' data-target='#forgetModal'>Lupa Kata Sandi?</a>
+                            <!-- <a href="" data-toggle='modal' data-target='#forgetModalReg'>Lupa Kata Sandi Regional?</a> -->
+                            <!-- <a href="Daftar_Sekolah/"> <i class="feather icon-home"></i> Daftar Sekolah</i></a>
+                                                    <a href="Daftar_Siswa/"> <i class="feather icon-user"></i> Daftar Siswa</a> -->
+                        </div>
+                        <!-- <div class="form-group d-flex justify-content-between align-items-center">
+                                                        <div class="text-left">
+                                                            <fieldset class="checkbox">
+                                                                <div class="vs-checkbox-con vs-checkbox-primary">
+                                                                    <input type="checkbox">
+                                                                    <span class="vs-checkbox">
+                                                                        <span class="vs-checkbox--check">
+                                                                            <i class="vs-icon feather icon-check"></i>
+                                                                        </span>
+                                                                    </span>
+                                                                    <span class="">Remember me</span>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div> -->
+                        <!-- <div class="text-right"><a href="auth-forgot-password.html" class="card-link">Forgot Password?</a></div> -->
+                        <!-- </div> -->
+                        <!-- <a href="auth-register.html" class="btn btn-outline-primary float-left btn-inline">Register</a> -->
+                        <button type="submit" class="btn btn-primary float-right btn-inline">Masuk</button>
+                        <!-- <a type="button" href="<?php echo site_url('login_portal'); ?>" class="btn btn-warning mr-1 float-right btn-inline">Kembali</a> -->
+                        <?php echo form_close(); ?>
+                    </div>
+                </div>
+                <div class="login-footer">
+                    <div class="divider">
+                        <!-- <div class="divider-text">OR</div> -->
+                    </div>
+                    <div class="footer-btn d-inline">
+                        <!-- <a href="#" class="btn btn-facebook"><span class="fa fa-facebook"></span></a>
+                                                <a href="#" class="btn btn-twitter white"><span class="fa fa-twitter"></span></a>
+                                                <a href="#" class="btn btn-google"><span class="fa fa-google"></span></a>
+                                                <a href="#" class="btn btn-github"><span class="fa fa-github-alt"></span></a> -->
+                    </div>
+                </div>
+                <form id="reset">
+                    <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="modal fade" id="forgetModal" role="dialog" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog modal-success">
+
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">Lupa Kata Sandi</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group row">
+                                        <div class="col-sm-1"></div>
+                                        <p class="col-sm-3 form-control-label">NUPTK</p>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="nuptk" id="nuptk">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-sm-1"></div>
+                                        <p class="col-sm-3 form-control-label">NIK</p>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="nik" id="nik">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" id="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="btn-submit">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <form id="resetreg">
+                    <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="modal fade" id="forgetModalReg" role="dialog" data-backdrop="static" data-keyboard="false">
+                        <div class="modal-dialog modal-success">
+
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">Lupa Kata Sandi</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group row">
+                                        <div class="col-sm-1"></div>
+                                        <p class="col-sm-3 form-control-label">Username</p>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="usernamereg" id="usernamereg">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-sm-1"></div>
+                                        <p class="col-sm-3 form-control-label">Email</p>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="emailreg" id="emailreg">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" id="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="btn-submit-reg">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div><br><br><br><br><br><br><br><br><br><br>
+        </div>
+        <div class="col-sm-6 ">
+            <h1 style="font-family: montserrat; color:#8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                  float: none; margin-bottom: 10px; margin-bottom: 10px;" class=" font-weight-bold">Daftar Operator <br> Sekolah</h1>
+            <p style="color: #8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                  float: none; margin-bottom: 10px; margin-bottom: 10px;">Kelola sekolah anda secara cermat dan <br> tepat.
+                Wujudkan sekolah unggulan berbasis <br> teknologi yang terintegrasi.<br><br><br>
+                <img src="<?= site_url(); ?>assets/images/operator.svg" class="img-fluid" alt="Responsive image"><br><br><br>
+                <a type="button" class="btn btn-primary text-white" href="Daftar_Sekolah/" style="border-radius: 23.5px; ">Daftar</a></p><br><br><br>
+        </div>
+    </div>
+    <!-- Tutup row 1 -->
+    <div class="row" style="background-color:white;">
+        <div class="col-sm-6 my-auto">
+            <canvas id="myChart" width="400" height="300" style="margin-top:130px;"></canvas><br><br><br><br><br>
+        </div>
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:#34495E; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px; " class=" font-weight-bold">Email yang sudah terdaftar!</h1>
+            <p style="font-family: montserrat; color:#34495E; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;" class="">Berikut adalah statistik email siswa yang telah terdaftar di KEMDIKBUD.</p>
+        </div>
+    </div>
+
+    <!-- Row kedua -->
+    <div class="row" style="background-color:#F4F6F6; ">
+        <div class="col-sm-12 text-center">
+            <h1 style="font-family: montserrat; color:#8779d5; margin-top:70px" class=" font-weight-bold ">Panduan Cara Penggunaan</h1>
+        </div>
+        <div class="col-sm-6 my-auto">
+            <img src="<?= site_url(); ?>assets/images/web2.svg" alt="Responsive image" style="margin-top:100px; width:500px;" class="float-right">
+        </div>
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:#8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;" class=" font-weight-bold">Daftar Terlebih Dahulu</h1>
+            <p style="color: #8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;">Jika anda belum memiliki akun, silahkan hubungi pihak sekolah atau admin sekolah untuk mendaftarkan diri anda, namun jika anda sudah memiliki akun maka ikuti panduan dibawah ini.</p>
+        </div>
+
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:#8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;" class=" font-weight-bold">Masuk Halaman <br> Login</h1>
+            <p style="color: #8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;">Jika anda belum memiliki akun, silahkan hubungi pihak sekolah atau admin sekolah untuk mendaftarkan diri anda, namun jika anda sudah memiliki akun maka ikuti panduan dibawah ini.</p>
+        </div>
+        <div class="col-sm-6 my-auto">
+            <img src="<?= site_url(); ?>assets/images/heatmap.svg" alt="Responsive image" style="margin-top:150px; width:500px;" class="float-left"><br><br><br><br><br><br><br><br><br>
+        </div>
+
+        <div class="col-sm-6 my-auto">
+            <img src="<?= site_url(); ?>assets/images/web3.svg" alt="Responsive image" style="margin-top:150px; width:500px;" class="float-right">
+        </div>
+        <div class=" col-sm-6 my-auto">
+            <h1 style="font-family: montserrat; color:#8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto;  margin-top:100px
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;" class=" font-weight-bold">Selamat, Anda Telah Berhasil Masuk</h1>
+            <p style="color: #8779d5; width: 38rem;  margin: 0 auto; float: none;  margin: 0 auto; 
+                    float: none; margin-bottom: 10px; margin-bottom: 10px;">Setelah anda melewati halaman login, anda kini telah berada dihalaman zimbra.</p>
+        </div>
+
+    </div>
+    <!-- Tutup row 2 -->
+    <br><br>
+
+</div>
+
+</div>
+<!-- Tutup Operator -->
+<!-- Tutup Body -->
+
+<!-- </html> -->
+
+<?php
+$this->load->view("layout/footer");
+?>
+
+<script src="<?= base_url(); ?>/app-assets/vendors/js/charts/chart.min.js"></script>
+<script>
+    var csrfName = '<?php echo $this->security->get_csrf_token_name(); ?>',
+    csrfHash = '<?php echo $this->security->get_csrf_hash(); ?>';
+    // var ctx = document.getElementById('myChart').getContext('2d');
+    // var myChart = new Chart(ctx, {
+    //     type: 'line',
+    //     data: {
+    //         labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+    //         datasets: [{
+    //             label: '# of Votes',
+    //             data: [12, 19, 3, 5, 2, 3],
+    //             backgroundColor: [
+    //                 'rgba(255, 99, 132, 0.2)',
+    //                 'rgba(54, 162, 235, 0.2)',
+    //                 'rgba(255, 206, 86, 0.2)',
+    //                 'rgba(75, 192, 192, 0.2)',
+    //                 'rgba(153, 102, 255, 0.2)',
+    //                 'rgba(255, 159, 64, 0.2)'
+    //             ],
+    //             borderColor: [
+    //                 'rgba(255, 99, 132, 1)',
+    //                 'rgba(54, 162, 235, 1)',
+    //                 'rgba(255, 206, 86, 1)',
+    //                 'rgba(75, 192, 192, 1)',
+    //                 'rgba(153, 102, 255, 1)',
+    //                 'rgba(255, 159, 64, 1)'
+    //             ],
+    //             borderWidth: 1
+    //         }]
+    //     },
+    //     options: {
+    //         scales: {
+    //             yAxes: [{
+    //                 ticks: {
+    //                     beginAtZero: true
+    //                 }
+    //             }]
+    //         }
+    //     }
+    // });                                           
+    var region, sekolah, provinsi;
+    var $primary = '#7367F0';
+    var $success = '#28C76F';
+    var $danger = '#EA5455';
+    var $warning = '#FF9F43';
+    var $label_color = '#1E1E1E';
+    var grid_line_color = '#dae1e7';
+    var scatter_grid_color = '#f3f3f3';
+    var $scatter_point_light = '#D1D4DB';
+    var $scatter_point_dark = '#5175E0';
+    var $white = '#fff';
+    var $black = '#000';
+    var themeColors = [$primary, $success, $danger, $warning, $label_color];
+    var horizontalChartctx = $("#myChart");
+    var horizontalchartOptions = {
+        // Elements options apply to all of the options unless overridden in a dataset
+        // In this case, we are setting the border of each horizontal bar to be 2px wide
+        legend: {
+            display: false,
+        },
+        title: {
+            display: true,
+            text: 'Jumlah Siswa yang telah mendaftarkan email'
+        }
+    };
+    $(document).ready(function() {
+        getData();
+    });
+
+    function getData() {
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: "<?php echo base_url('login_portal/get_statistik') ?>",
+            data: {
+                [csrfName]: csrfHash,
+                'region': region
+            },
+            success: function(data) {
+                if (data == "") {
+                    alert("Data Kosong");
+                } else {
+                    var horizontalchartData = {
+                        labels: data.jenjang,
+                        datasets: [{
+                            label: "Siswa",
+                            data: data.jumlah_siswa,
+                            backgroundColor: themeColors,
+                            borderColor: "transparent"
+                        }]
+                    };
+
+                    var horizontalChartconfig = {
+                        type: 'bar',
+                        // Chart Options
+                        options: horizontalchartOptions,
+                        data: horizontalchartData
+                    };
+                    // Create the chart
+                    var horizontalChart = new Chart(horizontalChartctx, horizontalChartconfig);
+                }
+            },
+            error: function() {
+                alert("error");
+            }
+        });
+
+    }
+    $(document).ready(function() {
+        // Add smooth scrolling to all links
+        $("a").on('click', function(event) {
+
+            // Make sure this.hash has a value before overriding default behavior
+            if (this.hash !== "") {
+                // Prevent default anchor click behavior
+                event.preventDefault();
+
+                // Store hash
+                var hash = this.hash;
+
+                // Using jQuery's animate() method to add smooth page scroll
+                // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
+                $('html, body').animate({
+                    scrollTop: $(hash).offset().top
+                }, 800, function() {
+
+                    // Add hash (#) to URL when done scrolling (default click behavior)
+                    window.location.hash = hash;
+                });
+            } // End if
+        });
+    });
+
+    $("#reset").submit(function(event) {
+
+        event.preventDefault();
+        document.getElementById("btn-submit").innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+        $.ajax({
+            url: "<?php echo site_url('Login_portal/cek_data_admin') ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(data) {
+                if (data.success) {
+                    swal.fire('Data Berhasil Dikirim!', 'Silahkan periksa email anda', 'success').then(function(result) {
+                        window.location.reload();
+                    });
+                } else {
+                    if (data.msg !== '') {
+                        Swal.fire({
+                            type: 'warning',
+                            title: 'Gagal!',
+                            text: data.msg
+                        }).then(function(result) {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            type: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi Kesalahan... Silahkan hubungi Administrator'
+                        });
+                    }
+                }
+            }
+
+        });
+        $.ajax({
+            url: "<?php echo site_url('Login_portal/email_reset_password_validation') ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(data) {
+                if (data.success) {} else {
+                    if (data.msg !== '') {} else {}
+                }
+            }
+
+        });
+    });
+
+    $("#resetreg").submit(function(event) {
+
+        event.preventDefault();
+        document.getElementById("btn-submit-reg").innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+        $.ajax({
+            url: "<?php echo site_url('Login_portal/cek_data_admin_reg') ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(data) {
+                if (data.success) {
+                    swal.fire('Data Berhasil Dikirim!', 'Silahkan periksa email anda', 'success').then(function(result) {
+                        window.location.reload();
+                    });
+                } else {
+                    if (data.msg !== '') {
+                        Swal.fire({
+                            type: 'warning',
+                            title: 'Gagal!',
+                            text: data.msg
+                        }).then(function(result) {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            type: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi Kesalahan... Silahkan hubungi Administrator'
+                        });
+                    }
+                }
+            }
+
+        });
+        $.ajax({
+            url: "<?php echo site_url('Login_portal/email_reset_password_validation_reg') ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(data) {
+                if (data.success) {} else {
+                    if (data.msg !== '') {} else {}
+                }
+            }
+
+        });
+    });
+    // $.ajax({
+    //     type: "POST",
+    //     url: "<?php echo site_url('login_portal/email_reset_password_validation'); ?>",
+    //     dataType: "JSON",
+    //     data: $('#reset').serialize(),
+    //     success: function(data, result) {
+    //         if (data.success) {
+    //             swal.fire('Data Berhasil Dikirim!', 'Silahkan periksa email anda', 'success').then(function(result) {
+    //                                 window.location.reload();
+    //                             });
+    //         } else {
+    //             if (data.msg !== '') {
+    //                     Swal.fire({
+    //                         type: 'warning',
+    //                         title: 'Gagal!',
+    //                         text: data.msg
+    //                     }).then(function(result) {
+    //                         window.location.reload();
+    //                         });
+    //             } else {
+    //                     Swal.fire({
+    //                         type: 'error',
+    //                         title: 'Oops...',
+    //                         text: 'Terjadi Kesalahan... Silahkan hubungi Administrator'
+    //                     });
+    //             }
+    //         }
+    //     },
+    // });
+
+    // }
+
+    $("#loginform").submit(function(event) {
+
+        event.preventDefault();
+        $.ajax({
+            url: "<?php echo site_url('Login_siswa/login_siswa_check') ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(result) {
+                var url = result.preauthURL;
+                if (result.success) {
+                    // Swal.fire({
+                    //     type: 'success',
+                    //     title: 'Berhasil Masuk!',
+                    // }).
+                    // then(function(result) {
+                    window.location.replace(url);
+                    // });
+                } else {
+                    if (result.msg !== '') {
+                        Swal.fire({
+                            type: 'warning',
+                            title: 'Gagal!',
+                            text: result.msg
+                        }).then(function(result) {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            type: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi Kesalahan... Silahkan hubungi Administrator'
+                        });
+                    }
+                }
+            }
+
+        });
+    });
+</script>

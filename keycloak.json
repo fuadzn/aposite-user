@@ -1,0 +1,10 @@
+{
+  "realm": "kominfo",
+  "auth-server-url": "http://sso.teratai.id/auth",
+  "ssl-required": "none",
+  "resource": "email-siswa",
+  "public-client": true,
+  "use-resource-role-mappings": true,
+  "enable-cors": true,
+  "WebOrigins": "*"
+}
